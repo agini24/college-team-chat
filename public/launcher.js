@@ -1,386 +1,461 @@
-/* ================== Coyotes Chat Launcher (Production) ==================
-   File: /public/launcher.js   (Vercel serves it at /launcher.js)
+/* =========================================================================
+   Coyotes Chat Launcher
+   - Bottom-right bubble that opens a 3-tab chat (Team, Coach Announcements, Questions)
+   - Persists login with localStorage
+   - Loads CometChat SDK from your own domain: /vendor/CometChat.js
+   - iMessage-like UI, black + red palette
+   ======================================================================== */
 
-   Key features:
-   - Ultra-light bootstrap: inject a small red button; init the chat only on first click
-   - Full iMessage-style panel with 3 tabs: Team / Announcements / Questions
-   - Unread badges per tab + a total badge on the launcher
-   - Login persistence (localStorage) per device (UID + name + auth token)
-   - Announcements read-only for non-coaches (UI); enforce in dashboard if desired
-   - Works on Squarespace via a single <script src=...> tag
-   - Optional: host CometChat SDK from Vercel to avoid CDN/corporate blockers
+(() => {
+  // -----------------------------
+  // 0) CONFIG — CHANGE THESE
+  // -----------------------------
+  const APP_ID   = "2808186f24275c0e";             // <- your CometChat App ID
+  const REGION   = "us";                            // <- your CometChat Region (e.g., "us")
+  const AUTH_KEY = "d20ca03513ab3c8c65c84f3429e7fd84a0deeb34"; // <- your public Auth Key (NOT App Secret)
 
-   Customize below in CONFIG.
-========================================================================= */
+  // CometChat SDK source hosted on your Vercel app:
+  const SDK_SRC  = "/vendor/CometChat.js";
 
-/*** ===== CONFIG ===== ***/
-const CC_APP_ID   = "2808186f24275c0e";
-const CC_REGION   = "us";
-const CC_AUTH_KEY = "d20ca03513ab3c8c65c84f3429e7fd84a0deeb34";
-
-const COACH_UIDS = ["coach_andrew", "agini"];      // who can post in Announcements
-const GROUPS = {
-  team: { id: "team_chat",     name: "Team Chat",           note: "Anyone can post." },
-  ann:  { id: "announcements", name: "Coach Announcements", note: "Only coaches can post here." },
-  qna:  { id: "questions",     name: "Questions",           note: "Ask and answer out loud." }
-};
-
-/* Only render on these pathnames (e.g., "/wbb", "/school"). Leave [] to allow anywhere Squarespace includes the snippet. */
-const ALLOWED_PATHS = [];
-
-/* Where to load the CometChat SDK from.
-   - CDN (default): "https://unpkg.com/@cometchat-pro/chat/CometChat.js"
-   - OR host it yourself (recommended for reliability):
-       1) Download CometChat.js and put it at: /public/vendor/CometChat.js
-       2) Set SDK_SRC = "/vendor/CometChat.js"
-*/
-const SDK_SRC = "https://unpkg.com/@cometchat-pro/chat/CometChat.js"; // or "/vendor/CometChat.js"
-
-/*** ===== Bootstrap: add launcher button immediately, load the rest on demand ===== ***/
-(function bootstrap(){
-  try {
-    if (ALLOWED_PATHS.length && !ALLOWED_PATHS.includes(location.pathname)) return;
-    if (document.getElementById("coyotes-chat-root")) {
-      // If a container exists from Squarespace markup, use it; otherwise create one.
-      const already = document.getElementById("cc-launcher-btn");
-      if (already) return;
-    }
-
-    // Create a minimal root if Squarespace didn’t add one
-    let host = document.getElementById("coyotes-chat-root");
-    if (!host) {
-      host = document.createElement("div");
-      host.id = "coyotes-chat-root";
-      document.body.appendChild(host);
-    }
-
-    // Styles just for the launcher
-    const css = `
-      :root{--cc-red:#D10F2F;--cc-red2:#C50E2C;}
-      #cc-launcher-btn{position:fixed;right:18px;bottom:18px;z-index:999999;width:64px;height:64px;border-radius:999px;border:1px solid #8E0C21;
-        background:linear-gradient(180deg,var(--cc-red),var(--cc-red2));color:#fff;display:flex;align-items:center;justify-content:center;
-        box-shadow:0 16px 38px rgba(209,15,47,.35);cursor:pointer;user-select:none}
-      #cc-launcher-btn svg{pointer-events:none}
-      #cc-launcher-badge{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 6px;display:none;align-items:center;justify-content:center;
-        background:#E01538;color:#fff;border-radius:999px;font-size:11px;font-weight:800;border:1px solid rgba(255,255,255,.25)}
-      #cc-launcher-btn.has-badge #cc-launcher-badge{display:inline-flex}
-    `;
-    const st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
-
-    // Button HTML
-    host.insertAdjacentHTML("beforeend", `
-      <button id="cc-launcher-btn" aria-label="Open chat">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M21 12c0 4.418-4.03 8-9 8-1.16 0-2.27-.19-3.27-.54L3 20l.99-4.45C3.37 14.27 3 13.16 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8Z" stroke="white" stroke-width="1.6" fill="none"/></svg>
-        <span id="cc-launcher-badge">0</span>
-      </button>
-      <div id="cc-panel-mount"></div>
-    `);
-
-    // Load the heavy stuff only on the first click
-    const btn = document.getElementById("cc-launcher-btn");
-    btn.addEventListener("click", async ()=>{
-      btn.disabled = true;
-      await initChatOnce();
-      togglePanel(true);
-      btn.disabled = false;
-    }, { once: true });
-
-  } catch(e) { console.error("Launcher bootstrap error", e); }
-})();
-
-/*** ===== One-time chat init ===== ***/
-let __chatReady = false;
-let __state = {
-  me: { uid: null, name: null, token: null },
-  activeKey: "team",
-  unread: { team:0, ann:0, qna:0 }
-};
-let __els = {}; // refs
-
-async function initChatOnce(){
-  if (__chatReady) return;
-  await loadSDK();
-  await initSDK();
-
-  renderPanel();       // build UI
-  wirePanelHandlers(); // events & actions
-  await tryRestore();  // auto-login if possible
-  await openRoom(__state.activeKey);
-  await bootUnread();
-
-  __chatReady = true;
-}
-
-/*** ===== Utils & SDK helpers ===== ***/
-function loadSDK(){
-  return new Promise((res, rej)=>{
-    if (window.CometChat) return res();
-    const s = document.createElement("script");
-    s.src = SDK_SRC; s.defer = true;
-    s.onload = res; s.onerror = ()=>rej(new Error("CometChat SDK failed to load from: " + SDK_SRC));
-    document.head.appendChild(s);
-  });
-}
-
-async function initSDK(){
-  const settings = new CometChat.AppSettingsBuilder()
-    .subscribePresenceForAllUsers()
-    .setRegion(CC_REGION)
-    .autoEstablishSocketConnection(true)
-    .build();
-  await CometChat.init(CC_APP_ID, settings);
-}
-
-function isCoach(uid){ return COACH_UIDS.includes(uid); }
-function fmt(ts){ try{ const d=new Date(ts*1000||ts); return d.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});}catch{return "";} }
-function setTabBadge(key,val){
-  __state.unread[key] = Math.max(0, val|0);
-  const map = { team:__els.bTeam, ann:__els.bAnn, qna:__els.bQna };
-  const el = map[key];
-  if (!el) return;
-  if (__state.unread[key] > 0){ el.textContent = __state.unread[key]; el.style.display="inline-flex"; }
-  else { el.style.display="none"; }
-  // global badge on launcher
-  const total = __state.unread.team + __state.unread.ann + __state.unread.qna;
-  const btn = document.getElementById("cc-launcher-btn");
-  const b = document.getElementById("cc-launcher-badge");
-  if (total > 0){ b.textContent = total; btn.classList.add("has-badge"); }
-  else { btn.classList.remove("has-badge"); }
-}
-
-async function ensureGroup(gid, title){
-  try { await CometChat.getGroup(gid); }
-  catch { const g = new CometChat.Group(gid, title, CometChat.GROUP_TYPE.PUBLIC); await CometChat.createGroup(g); }
-  try { await CometChat.joinGroup(gid, CometChat.GROUP_TYPE.PUBLIC, ""); } catch{}
-}
-
-async function loadHistory(gid){
-  __els.msgs.innerHTML = "";
-  const req = new CometChat.MessagesRequestBuilder().setGUID(gid).setLimit(50).build();
-  const hist = await req.fetchPrevious();
-  hist.reverse().forEach(m=>{
-    const fromMe = m.getSender()?.uid === __state.me.uid;
-    if (m.getCategory()==="message" && m.getType()==="text"){
-      addTextRow(m.getText(), fromMe, m.getSender(), m.getSentAt());
-    }
-  });
-  __els.msgs.scrollTop = __els.msgs.scrollHeight;
-}
-
-function addTextRow(text, fromMe, sender, ts){
-  const r = document.createElement("div");
-  r.className = "ccl-row" + (fromMe?" ccl-me":"");
-  const b = document.createElement("div");
-  b.className = "ccl-bub " + (fromMe?"me":"their");
-  b.textContent = text;
-  const meta = document.createElement("div");
-  meta.className = "ccl-meta";
-  meta.textContent = fromMe ? fmt(ts) : `${sender?.name||sender?.uid||"Unknown"} • ${fmt(ts)}`;
-  const wrap = document.createElement("div"); wrap.appendChild(b); wrap.appendChild(meta);
-  r.appendChild(wrap); __els.msgs.appendChild(r);
-}
-
-function listenTo(gid){
-  CometChat.removeMessageListener("cc-listener");
-  CometChat.addMessageListener("cc-listener",
-    new CometChat.MessageListener({
-      onTextMessageReceived: (m)=>{
-        if (m.getReceiverType()!=="group") return;
-        const roomId = m.getReceiver().guid;
-        const fromMe = m.getSender().uid === __state.me.uid;
-        if (roomId === gid){
-          addTextRow(m.getText(), fromMe, m.getSender(), m.getSentAt());
-          setTabBadge(__state.activeKey, 0); // viewing -> read
-          __els.msgs.scrollTop = __els.msgs.scrollHeight;
-        } else if (!fromMe){
-          if (roomId===GROUPS.team.id) setTabBadge("team", __state.unread.team+1);
-          if (roomId===GROUPS.ann.id)  setTabBadge("ann",  __state.unread.ann+1);
-          if (roomId===GROUPS.qna.id)  setTabBadge("qna",  __state.unread.qna+1);
-        }
-      }
-    })
-  );
-}
-
-async function openRoom(key){
-  __state.activeKey = key;
-  __els.tbTeam.classList.toggle("active", key==="team");
-  __els.tbAnn.classList.toggle("active",  key==="ann");
-  __els.tbQna.classList.toggle("active",  key==="qna");
-  setTabBadge(key, 0);
-
-  const room = GROUPS[key];
-  __els.note.textContent = room.note;
-
-  const readOnly = (key==="ann" && !isCoach(__state.me.uid));
-  __els.text.disabled = readOnly; __els.send.disabled = readOnly;
-  __els.text.placeholder = readOnly ? "Read-only: coaches only" : "Message… (Enter to send)";
-
-  await ensureGroup(room.id, room.name);
-  await loadHistory(room.id);
-  listenTo(room.id);
-}
-
-async function bootUnread(){
-  try { const c = await CometChat.getUnreadMessageCountForGroup(GROUPS.team.id); if (c) setTabBadge("team", c); } catch {}
-  try { const c = await CometChat.getUnreadMessageCountForGroup(GROUPS.ann.id);  if (c) setTabBadge("ann",  c); } catch {}
-  try { const c = await CometChat.getUnreadMessageCountForGroup(GROUPS.qna.id);  if (c) setTabBadge("qna",  c); } catch {}
-}
-
-async function doLogin(uid, name){
-  try { await CometChat.login(uid, CC_AUTH_KEY); }
-  catch {
-    const u = new CometChat.User(uid); u.setName(name);
-    await CometChat.createUser(u, CC_AUTH_KEY);
-    await CometChat.login(uid, CC_AUTH_KEY);
-  }
-  const user = await CometChat.getLoggedinUser();
-  __state.me = { uid, name, token: user?.authToken || null };
-  localStorage.setItem("ct_uid", uid);
-  localStorage.setItem("ct_name", name);
-  if (__state.me.token) localStorage.setItem("ct_token", __state.me.token);
-}
-
-async function tryRestore(){
-  const uid = localStorage.getItem("ct_uid");
-  const name = localStorage.getItem("ct_name");
-  const token = localStorage.getItem("ct_token");
-  if (!uid) { showLogin(true); return; }
-  try {
-    if (token) await CometChat.loginWithAuthToken(token);
-    else await CometChat.login(uid, CC_AUTH_KEY);
-    __state.me = { uid, name, token: token || null };
-    showLogin(false);
-  } catch {
-    localStorage.removeItem("ct_token");
-    showLogin(true);
-  }
-}
-
-/*** ===== UI (panel) ===== ***/
-function renderPanel(){
-  // Panel CSS (scoped)
-  const css = `
-  :root{
-    --cc-ink:#EEEFF2;--cc-muted:#9EA3AB;--cc-line:#24262B;--cc-red:#D10F2F;--cc-red2:#C50E2C;
-    --cc-bg1:#111214;--cc-bg2:#0F1012;
-  }
-  #ccl-panel{position:fixed;right:18px;bottom:96px;width:360px;max-height:75vh;display:none;z-index:999999;border:1px solid var(--cc-line);border-radius:16px;overflow:hidden;background:linear-gradient(180deg,var(--cc-bg1),var(--cc-bg2));color:var(--cc-ink);font-family:ui-sans-serif,-apple-system,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial}
-  #ccl-head{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--cc-line)}
-  #ccl-tabs{display:flex;gap:6px;background:#0E0F11;border:1px solid var(--cc-line);border-radius:999px;padding:6px}
-  #ccl-tabs button{position:relative;appearance:none;border:0;background:transparent;color:#9aa0a6;font-weight:700;padding:8px 12px;border-radius:999px;cursor:pointer}
-  #ccl-tabs button.active{background:linear-gradient(180deg,var(--cc-red),var(--cc-red2));color:#fff;box-shadow:0 8px 24px rgba(209,15,47,.35)}
-  .tb-badge{position:absolute;transform:translate(10px,-8px);min-width:16px;height:16px;padding:0 4px;background:#E01538;color:#fff;border-radius:999px;font-size:10px;font-weight:800;border:1px solid rgba(255,255,255,.2);display:none;align-items:center;justify-content:center}
-  #ccl-close{margin-left:auto;background:#0D0E10;border:1px solid var(--cc-line);color:#bbb;border-radius:10px;padding:6px 8px;cursor:pointer}
-  #ccl-body{display:flex;flex-direction:column;gap:10px;padding:10px}
-  #ccl-login{display:flex;flex-direction:column;gap:8px}
-  #ccl-login input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--cc-line);background:#0B0C0E;color:#EEEFF2}
-  #ccl-login .btn{padding:10px 12px;border-radius:10px;border:1px solid #8E0C21;background:linear-gradient(180deg,var(--cc-red),var(--cc-red2));color:#fff;font-weight:800;cursor:pointer}
-  #ccl-chat{display:flex;flex-direction:column;gap:10px}
-  #ccl-msgs{flex:1;min-height:260px;max-height:48vh;overflow:auto;border:1px solid var(--cc-line);background:#0B0C0E;border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px}
-  .ccl-row{display:flex;align-items:flex-end;gap:8px}.ccl-me{justify-content:flex-end}
-  .ccl-bub{max-width:78%;padding:8px 10px;border-radius:16px;border:1px solid rgba(255,255,255,.05);line-height:1.25;font-size:14px}
-  .ccl-bub.me{background:#E01538;color:#fff}.ccl-bub.their{background:#1C1E22;color:#e6e7ea}
-  .ccl-meta{font-size:11px;color:#9aa0a6;margin-top:2px}
-  #ccl-comp{display:flex;gap:8px;align-items:flex-end}
-  #ccl-text{flex:1;height:44px;padding:10px 12px;border:1px solid var(--cc-line);border-radius:12px;outline:none;background:#0B0C0E;color:#EEEFF2}
-  #ccl-send{padding:10px 12px;border-radius:12px;border:1px solid #8E0C21;background:linear-gradient(180deg,var(--cc-red),var(--cc-red2));color:#fff;font-weight:800;cursor:pointer}
-  `;
-  const st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
-
-  const mount = document.getElementById("cc-panel-mount");
-  mount.innerHTML = `
-    <div id="ccl-panel" role="dialog" aria-modal="true">
-      <div id="ccl-head">
-        <div id="ccl-tabs">
-          <button id="tb-team" class="active">Team<span id="bdg-team" class="tb-badge">0</span></button>
-          <button id="tb-ann">Announcements<span id="bdg-ann" class="tb-badge">0</span></button>
-          <button id="tb-qna">Questions<span id="bdg-qna" class="tb-badge">0</span></button>
-        </div>
-        <button id="ccl-close">Close</button>
-      </div>
-      <div id="ccl-body">
-        <div id="ccl-login" class="hidden">
-          <input id="lg-uid" placeholder="UID (e.g., p_john)" />
-          <input id="lg-name" placeholder="Display name" />
-          <button id="lg-go" class="btn">Log in</button>
-        </div>
-        <div id="ccl-chat">
-          <div id="ccl-msgs"></div>
-          <div id="ccl-comp">
-            <textarea id="ccl-text" placeholder="Message… (Enter to send)"></textarea>
-            <button id="ccl-send">Send</button>
-          </div>
-          <div class="ccl-meta" id="ccl-note"></div>
-        </div>
-      </div>
-    </div>
-  `;
-
-  // Refs
-  __els = {
-    panel: document.getElementById("ccl-panel"),
-    close: document.getElementById("ccl-close"),
-    tbTeam: document.getElementById("tb-team"),
-    tbAnn:  document.getElementById("tb-ann"),
-    tbQna:  document.getElementById("tb-qna"),
-    bTeam:  document.getElementById("bdg-team"),
-    bAnn:   document.getElementById("bdg-ann"),
-    bQna:   document.getElementById("bdg-qna"),
-    login:  document.getElementById("ccl-login"),
-    uid:    document.getElementById("lg-uid"),
-    name:   document.getElementById("lg-name"),
-    go:     document.getElementById("lg-go"),
-    msgs:   document.getElementById("ccl-msgs"),
-    text:   document.getElementById("ccl-text"),
-    send:   document.getElementById("ccl-send"),
-    note:   document.getElementById("ccl-note"),
+  // Group IDs (stable identifiers). Rename if you want.
+  const GROUPS = {
+    TEAM:          { guid: "team_chat",           name: "Team Chat",           type: "public"  },
+    ANNOUNCEMENTS: { guid: "coach_announcements", name: "Coach Announcements", type: "public"  },
+    QUESTIONS:     { guid: "questions",           name: "Questions",           type: "public"  },
   };
-}
 
-function wirePanelHandlers(){
-  const btn = document.getElementById("cc-launcher-btn");
-  __els.close.addEventListener("click", ()=>togglePanel(false));
-  btn.addEventListener("click", ()=>togglePanel(true));
+  // If someone’s UID starts with this, we treat them as a coach (can post in announcements)
+  const COACH_UID_PREFIX = "coach_";
 
-  __els.tbTeam.addEventListener("click", ()=>openRoom("team"));
-  __els.tbAnn.addEventListener("click",  ()=>openRoom("ann"));
-  __els.tbQna.addEventListener("click",  ()=>openRoom("qna"));
+  // -----------------------------
+  // 1) LOAD SDK (once)
+  // -----------------------------
+  function loadSDK() {
+    return new Promise((resolve, reject) => {
+      if (window.CometChat) return resolve();
+      const s = document.createElement("script");
+      s.src = SDK_SRC;
+      s.async = true;
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error("Failed to load CometChat SDK from " + SDK_SRC));
+      document.head.appendChild(s);
+    });
+  }
 
-  __els.send.addEventListener("click", sendText);
-  __els.text.addEventListener("keydown", (e)=>{
-    if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendText(); }
-  });
+  // -----------------------------
+  // 2) CometChat helpers
+  // -----------------------------
+  async function initCometChat() {
+    const appSetting = new CometChat.AppSettingsBuilder()
+      .subscribePresenceForAllUsers()
+      .setRegion(REGION)
+      .autoEstablishSocketConnection(true)
+      .build();
 
-  __els.go.addEventListener("click", async ()=>{
-    const uid = __els.uid.value.trim();
-    const name= __els.name.value.trim();
-    if(!uid || !name) return alert("Enter UID & Display name");
-    __els.go.disabled = true;
-    try{
-      await doLogin(uid, name);
-      showLogin(false);
-      await openRoom(__state.activeKey);
-      await bootUnread();
-    } finally { __els.go.disabled = false; }
-  });
-}
+    await CometChat.init(APP_ID, appSetting);
+  }
 
-function togglePanel(open){
-  __els.panel.style.display = open ? "block" : "none";
-}
+  function currentUser() {
+    try {
+      const raw = localStorage.getItem("coy_chat_user");
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  }
 
-function showLogin(show){
-  __els.login.classList.toggle("hidden", !show);
-  __els.text.disabled = show;
-  __els.send.disabled = show;
-  __els.text.placeholder = show ? "Log in to chat" : "Message… (Enter to send)";
-}
+  function saveUser(u) {
+    localStorage.setItem("coy_chat_user", JSON.stringify({ uid: u.uid, name: u.name }));
+  }
 
-async function sendText(){
-  const t = __els.text.value.trim(); if(!t) return;
-  const room = GROUPS[__state.activeKey];
-  const msg = new CometChat.TextMessage(room.id, t, CometChat.RECEIVER_TYPE.GROUP);
-  await CometChat.sendMessage(msg);
-  __els.text.value = "";
-}
+  async function createOrLogin(uid, name) {
+    // 1) Try to create (if exists, CometChat throws 400, which we can ignore)
+    const user = new CometChat.User(uid);
+    user.setName(name);
+    try { await CometChat.createUser(user, AUTH_KEY); } catch (_) {}
+
+    // 2) Login
+    await CometChat.login(uid, AUTH_KEY);
+    saveUser({ uid, name });
+    return { uid, name };
+  }
+
+  async function ensureGroup({guid, name, type}) {
+    try {
+      await CometChat.getGroup(guid);
+    } catch {
+      // Create if not exists (public group)
+      const g = new CometChat.Group(guid, name, CometChat.GROUP_TYPE.PUBLIC);
+      try { await CometChat.createGroup(g); } catch (_) {}
+    }
+  }
+
+  function isCoach(uid) {
+    return String(uid || "").startsWith(COACH_UID_PREFIX);
+  }
+
+  // -----------------------------
+  // 3) UI — bubble + panel
+  // -----------------------------
+  const ROOT_ID = "coyotes-chat-root";
+
+  function ensureRoot() {
+    let root = document.getElementById(ROOT_ID);
+    if (!root) {
+      root = document.createElement("div");
+      root.id = ROOT_ID;
+      document.body.appendChild(root);
+    }
+    return root;
+  }
+
+  function injectStyles() {
+    if (document.getElementById("coy-chat-styles")) return;
+    const css = `
+    :root{
+      --c-red:#e60023;
+      --c-bg:#0b0b0d;
+      --c-elev:#141418;
+      --c-border:rgba(255,255,255,.08);
+      --c-text:#f2f2f5;
+      --c-dim:#9aa0aa;
+      --c-green:#2ecc71;
+    }
+    #${ROOT_ID} { position: fixed; right: 18px; bottom: 18px; z-index: 999999; }
+
+    .coy-bubble {
+      width: 58px; height: 58px; border-radius: 999px; background: var(--c-red);
+      display: grid; place-items: center; color: #fff; cursor: pointer;
+      box-shadow: 0 10px 24px rgba(230,0,35,.35);
+      position: relative;
+      transition: transform .15s ease;
+    }
+    .coy-bubble:active { transform: scale(.96); }
+    .coy-badge {
+      position: absolute; top: -6px; right: -6px; min-width: 20px; height: 20px;
+      padding: 0 6px; border-radius: 999px; background:#fff; color:#000; font-weight:800;
+      display:flex; align-items:center; justify-content:center; font-size:12px;
+      box-shadow:0 4px 10px rgba(0,0,0,.3);
+    }
+
+    .coy-panel {
+      position: absolute; right: 0; bottom: 74px; width: min(92vw, 420px); height: min(70vh, 640px);
+      background: var(--c-bg); border:1px solid var(--c-border); border-radius: 18px;
+      display: none; flex-direction: column; overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0,0,0,.5);
+    }
+    .coy-panel.open { display:flex; }
+
+    .coy-head {
+      display:flex; align-items:center; justify-content:space-between;
+      padding: 10px 12px; background: linear-gradient(180deg,#16161b,#121217);
+      border-bottom:1px solid var(--c-border); color: var(--c-text);
+    }
+    .coy-tabs { display:flex; gap:8px; }
+    .coy-tab {
+      padding: 6px 10px; border-radius: 999px; border:1px solid var(--c-border);
+      background: #0f0f13; color: var(--c-dim); cursor: pointer; font-weight: 700; font-size: 12px;
+      display:flex; align-items:center; gap:6px;
+    }
+    .coy-tab.active { color:#fff; background: #18181f; border-color: #2a2a35; }
+    .coy-tab .badge {
+      min-width: 14px; height:14px; border-radius:999px; background: var(--c-red); color:#fff;
+      display:inline-flex; align-items:center; justify-content:center; font-size:10px; padding:0 4px;
+      transform: translateY(-1px);
+    }
+
+    .coy-body { display:flex; flex-direction:column; gap:0; flex:1; }
+    .coy-log {
+      flex:1; overflow:auto; padding: 14px; background: #0e0e12;
+    }
+    .msg {
+      max-width: 82%; margin-bottom:10px; padding: 8px 10px; border-radius: 14px;
+      color:#fff; font-size:14px; line-height:1.3;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+      word-break: break-word;
+    }
+    .me   { margin-left: auto; background: #1f1f2a; }
+    .them { margin-right: auto; background: #171720; }
+    .meta { color: var(--c-dim); font-size: 11px; margin-top: 2px; }
+
+    .coy-input {
+      display:flex; gap:10px; border-top:1px solid var(--c-border); background: var(--c-elev); padding:10px;
+    }
+    .coy-input input {
+      flex:1; background:#0e0e13; border:1px solid var(--c-border); border-radius:12px;
+      padding:10px 12px; color:#fff; outline:none;
+    }
+    .coy-input button {
+      background: var(--c-red); color:#fff; border:none; border-radius:12px; padding: 10px 14px; font-weight:800; cursor:pointer;
+    }
+    .coy-muted { color: var(--c-dim); font-size:12px; padding: 10px 14px; border-top:1px solid var(--c-border); }
+
+    .coy-login {
+      padding:12px; border-bottom:1px solid var(--c-border); background:#101015; display:flex; gap:8px; flex-wrap:wrap;
+    }
+    .coy-login input{
+      background:#0e0e13; border:1px solid var(--c-border); border-radius:10px; padding:8px 10px; color:#fff;
+    }
+    .coy-login button{ background: var(--c-green); color:#000; border:none; border-radius:10px; padding:8px 12px; font-weight:800; cursor:pointer;}
+    `;
+    const el = document.createElement("style");
+    el.id = "coy-chat-styles";
+    el.textContent = css;
+    document.head.appendChild(el);
+  }
+
+  function createUI() {
+    const root = ensureRoot();
+    root.innerHTML = `
+      <button class="coy-bubble" id="coyBubble" aria-label="Open chat">
+        <!-- chat icon -->
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V5a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v10Z" fill="white"/></svg>
+        <span class="coy-badge" id="coyGlobalBadge" style="display:none">0</span>
+      </button>
+
+      <section class="coy-panel" id="coyPanel" role="dialog" aria-label="Coyotes Chat" aria-modal="false">
+        <header class="coy-head">
+          <div class="coy-tabs">
+            <button class="coy-tab active" data-tab="TEAM" id="tabTEAM">
+              Team <span class="badge" id="badgeTEAM" style="display:none">0</span>
+            </button>
+            <button class="coy-tab" data-tab="ANNOUNCEMENTS" id="tabANNOUNCEMENTS">
+              Announcements <span class="badge" id="badgeANNOUNCEMENTS" style="display:none">0</span>
+            </button>
+            <button class="coy-tab" data-tab="QUESTIONS" id="tabQUESTIONS">
+              Questions <span class="badge" id="badgeQUESTIONS" style="display:none">0</span>
+            </button>
+          </div>
+          <small id="coyUserLabel" style="color:#aab; font-size:12px;"></small>
+        </header>
+
+        <div class="coy-login" id="coyLogin" style="display:none">
+          <input id="loginUID" placeholder="UID (e.g., p_john or coach_andrew)" />
+          <input id="loginName" placeholder="Display name" />
+          <button id="loginBtn">Log in</button>
+        </div>
+
+        <div class="coy-body">
+          <div class="coy-log" id="coyLog"></div>
+          <div class="coy-input" id="coyInput">
+            <input id="coyText" placeholder="Message…" />
+            <button id="coySend">Send</button>
+          </div>
+          <div class="coy-muted" id="coyMuted" style="display:none">Only coaches can post in Announcements.</div>
+        </div>
+      </section>
+    `;
+
+    // Toggle open/close
+    const bubble = document.getElementById("coyBubble");
+    const panel  = document.getElementById("coyPanel");
+    bubble.onclick = () => panel.classList.toggle("open");
+
+    // Tabs
+    root.querySelectorAll(".coy-tab").forEach(b => {
+      b.addEventListener("click", () => {
+        root.querySelectorAll(".coy-tab").forEach(x => x.classList.remove("active"));
+        b.classList.add("active");
+        setActiveTab(b.dataset.tab);
+      });
+    });
+  }
+
+  // -----------------------------
+  // 4) Chat runtime
+  // -----------------------------
+  let activeTab = "TEAM";
+  let activeGroup = GROUPS.TEAM; // default
+  let listenerId = "coyotes-listener";
+  let unread = { TEAM:0, ANNOUNCEMENTS:0, QUESTIONS:0 };
+
+  let loggedUser = null;
+
+  function setActiveTab(key) {
+    activeTab = key;
+    activeGroup = GROUPS[key];
+    // hide or show posting depending on tab/coach
+    const iBox = document.getElementById("coyInput");
+    const muted= document.getElementById("coyMuted");
+    if (key === "ANNOUNCEMENTS" && !isCoach(loggedUser?.uid)) {
+      iBox.style.display = "none"; muted.style.display = "block";
+    } else {
+      iBox.style.display = "flex"; muted.style.display = "none";
+    }
+    // mark messages read & load
+    unread[key] = 0; updateBadges();
+    loadHistory(activeGroup.guid);
+  }
+
+  function updateBadges() {
+    const total = unread.TEAM + unread.ANNOUNCEMENTS + unread.QUESTIONS;
+    const g = document.getElementById("coyGlobalBadge");
+    g.style.display = total ? "inline-flex" : "none";
+    g.textContent = total;
+
+    ["TEAM","ANNOUNCEMENTS","QUESTIONS"].forEach(k => {
+      const b = document.getElementById("badge"+k);
+      if (!b) return;
+      b.style.display = unread[k] ? "inline-flex" : "none";
+      b.textContent = unread[k] || "";
+    });
+  }
+
+  function appendMessage(msg, mine) {
+    const log = document.getElementById("coyLog");
+    const div = document.createElement("div");
+    div.className = "msg " + (mine ? "me" : "them");
+    const text = (msg.text || "").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    const who  = mine ? "You" : (msg.sender?.name || msg.sender?.uid || "User");
+    const when = new Date(msg.sentAt*1000 || Date.now()).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+    div.innerHTML = `${text}<div class="meta">${who} • ${when}</div>`;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  async function loadHistory(guid) {
+    const log = document.getElementById("coyLog");
+    log.innerHTML = "";
+    try {
+      // join group if needed
+      try { await CometChat.joinGroup(guid, CometChat.GROUP_TYPE.PUBLIC, ""); } catch (_) {}
+      const req = new CometChat.MessagesRequestBuilder()
+        .setGUID(guid)
+        .setLimit(30)
+        .build();
+      const msgs = await req.fetchPrevious();
+      msgs.reverse().forEach(m => appendMessage(m, m.sender?.uid === loggedUser?.uid));
+    } catch (e) {
+      log.innerHTML = `<div class="msg them">Couldn’t load messages.</div>`;
+      console.error(e);
+    }
+  }
+
+  function addLiveListener() {
+    try { CometChat.removeMessageListener(listenerId); } catch {}
+    CometChat.addMessageListener(
+      listenerId,
+      new CometChat.MessageListener({
+        onTextMessageReceived: (m) => {
+          const gid = m.receiverType === "group" ? m.receiverId : null;
+          const tabKey =
+            gid === GROUPS.TEAM.guid ? "TEAM" :
+            gid === GROUPS.ANNOUNCEMENTS.guid ? "ANNOUNCEMENTS" :
+            gid === GROUPS.QUESTIONS.guid ? "QUESTIONS" : null;
+
+          if (!tabKey) return;
+
+          // if not on this tab or panel closed -> increment unread
+          const panelOpen = document.getElementById("coyPanel")?.classList.contains("open");
+          if (!(tabKey === activeTab && panelOpen)) {
+            unread[tabKey] = (unread[tabKey] || 0) + 1;
+            updateBadges();
+          } else {
+            // viewing this tab — show immediately
+            appendMessage(m, m.sender?.uid === loggedUser?.uid);
+          }
+        }
+      })
+    );
+  }
+
+  async function sendActive(text) {
+    if (!text.trim()) return;
+    const msg = new CometChat.TextMessage(
+      activeGroup.guid,
+      text.trim(),
+      CometChat.RECEIVER_TYPE.GROUP
+    );
+    const m = await CometChat.sendMessage(msg);
+    appendMessage(m, true);
+  }
+
+  // -----------------------------
+  // 5) Login bar
+  // -----------------------------
+  function showLogin(show) {
+    document.getElementById("coyLogin").style.display = show ? "flex" : "none";
+    document.getElementById("coyUserLabel").textContent = show ? "" : `Logged in`;
+  }
+
+  function bindInputHandlers() {
+    document.getElementById("coySend").onclick = () => {
+      const inp = document.getElementById("coyText");
+      sendActive(inp.value).catch(console.error);
+      inp.value = "";
+    };
+    document.getElementById("coyText").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.getElementById("coySend").click();
+    });
+
+    document.getElementById("loginBtn").onclick = async () => {
+      const uid  = document.getElementById("loginUID").value.trim();
+      const name = document.getElementById("loginName").value.trim() || uid;
+      if (!uid) return alert("Please enter a UID");
+      try {
+        await createOrLogin(uid, name);
+        loggedUser = { uid, name };
+        document.getElementById("coyUserLabel").textContent = `${name} (${uid})`;
+        showLogin(false);
+        await postLoginSetup();
+      } catch (e) {
+        console.error(e);
+        alert("Login failed. Check console.");
+      }
+    };
+  }
+
+  // -----------------------------
+  // 6) After login: ensure groups & listeners
+  // -----------------------------
+  async function postLoginSetup() {
+    // Make sure our 3 groups exist (no-op if they already exist)
+    await Promise.all([
+      ensureGroup(GROUPS.TEAM),
+      ensureGroup(GROUPS.ANNOUNCEMENTS),
+      ensureGroup(GROUPS.QUESTIONS),
+    ]);
+
+    // Join all to receive messages
+    for (const g of [GROUPS.TEAM, GROUPS.ANNOUNCEMENTS, GROUPS.QUESTIONS]) {
+      try { await CometChat.joinGroup(g.guid, CometChat.GROUP_TYPE.PUBLIC, ""); } catch {}
+    }
+
+    // Start listener & load default tab
+    addLiveListener();
+    setActiveTab(activeTab);
+  }
+
+  // -----------------------------
+  // 7) Boot
+  // -----------------------------
+  async function boot() {
+    injectStyles();
+    createUI();
+    bindInputHandlers();
+
+    const u = currentUser();
+    if (!u) {
+      showLogin(true);
+    } else {
+      try {
+        await CometChat.login(u.uid, AUTH_KEY);
+        loggedUser = u;
+        document.getElementById("coyUserLabel").textContent = `${u.name} (${u.uid})`;
+        showLogin(false);
+        await postLoginSetup();
+      } catch {
+        showLogin(true); // token expired or similar
+      }
+    }
+  }
+
+  // Load SDK → init → start
+  loadSDK()
+    .then(initCometChat)
+    .then(boot)
+    .catch((e) => {
+      console.error(e);
+      // If SDK fails to load, keep the bubble but make it say "offline"
+      const root = ensureRoot();
+      root.innerHTML = `<div style="position:fixed;right:18px;bottom:18px;background:#222;color:#fff;padding:10px 14px;border-radius:12px;border:1px solid #444;">Chat unavailable</div>`;
+    });
+})();
