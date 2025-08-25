@@ -7,15 +7,14 @@
 <meta name="theme-color" content="#D10F2F" />
 
 <!-- CometChat JavaScript SDK -->
-<!-- If this specific version 3 loads slowly in your region, remove "@3" to use latest:  https://unpkg.com/@cometchat-pro/chat/CometChat.js -->
-<script src="https://unpkg.com/@cometchat-pro/chat@3/CometChat.js"></script>
+<script src="https://unpkg.com/@cometchat-pro/chat/CometChat.js"></script>
 
 <style>
-  /* ===== Luxe black + red shell with iMessage-style bubbles ===== */
   :root{
     --bg:#0A0A0B; --panel:#111214; --ink:#EEEFF2; --muted:#A1A5AD; --line:#24262B;
     --accent:#D10F2F; --accent-ink:#fff; --my:#E01538; --their:#1C1E22;
-    --radius:18px; --shadow:0 18px 50px rgba(0,0,0,.35); --font: ui-sans-serif,-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+    --radius:18px; --shadow:0 18px 50px rgba(0,0,0,.35);
+    --font: ui-sans-serif,-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
   }
   *{box-sizing:border-box}
   html,body{height:100%}
@@ -23,54 +22,41 @@
     margin:0; background:radial-gradient(1200px 800px at 70% -10%,#111214 0%,#0A0A0B 60%,#070708 100%);
     color:var(--ink); font-family:var(--font); -webkit-font-smoothing:antialiased;
   }
-
-  header{
-    position:sticky; top:0; z-index:30;
-    background:linear-gradient(180deg, rgba(10,10,11,.85), rgba(10,10,11,.55));
-    backdrop-filter:blur(10px) saturate(1.25);
-    border-bottom:1px solid var(--line);
-  }
+  header{position:sticky; top:0; z-index:30; background:linear-gradient(180deg, rgba(10,10,11,.85), rgba(10,10,11,.55)); backdrop-filter:blur(10px) saturate(1.25); border-bottom:1px solid var(--line)}
   .wrap{max-width:1200px; margin:0 auto; padding:12px 16px}
   h1{margin:2px 0 10px; font-size:20px; letter-spacing:.3px}
 
-  /* Segmented tabs */
   .seg{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
   .seg-box{display:inline-flex; gap:6px; padding:6px; background:#0E0F11; border:1px solid var(--line); border-radius:999px; box-shadow:var(--shadow)}
-  .seg button{appearance:none; border:0; cursor:pointer; padding:9px 16px; border-radius:999px; font-weight:700; color:#9aa0a6; background:transparent; transition:.15s ease}
+  .seg button{position:relative; appearance:none; border:0; cursor:pointer; padding:9px 16px; border-radius:999px; font-weight:700; color:#9aa0a6; background:transparent; transition:.15s ease}
   .seg button.active{background:linear-gradient(180deg,#E01538,#C70D2C); color:#fff; box-shadow:0 10px 30px rgba(209,15,47,.35)}
+  /* unread badge */
+  .badge{
+    position:absolute; top:-6px; right:-4px; min-width:18px; height:18px; padding:0 5px;
+    display:inline-flex; align-items:center; justify-content:center;
+    background:#E01538; color:#fff; border-radius:999px; font-size:11px; font-weight:800; border:1px solid rgba(255,255,255,.15);
+  }
   .pill{margin-left:auto; display:inline-flex; align-items:center; gap:8px; padding:7px 12px; border:1px solid var(--line); border-radius:999px; font-size:12px; color:var(--muted); background:linear-gradient(180deg,#0F1012,#0C0D0F)}
 
   main{padding:16px}
   .grid{max-width:1200px; margin:0 auto; display:grid; grid-template-columns:340px 1fr; gap:16px}
   @media (max-width:1000px){.grid{grid-template-columns:1fr}}
-
   .panel{border:1px solid var(--line); border-radius:18px; background:linear-gradient(180deg,#111214,#0E0F11); box-shadow:var(--shadow)}
   .panel h3{margin:0; padding:12px 14px; border-bottom:1px solid var(--line); font-size:13px; color:#b8bdc7; font-weight:800; letter-spacing:.35px; text-transform:uppercase}
   .panel .body{padding:12px 14px}
-
   .field{display:flex; flex-direction:column; gap:6px; margin-bottom:12px}
   .field label{font-size:12px; color:var(--muted)}
-  input,textarea{
-    padding:12px 14px; border:1px solid var(--line); border-radius:14px; background:#0B0C0E; color:var(--ink); resize:none;
-    outline:none; transition:border-color .15s ease, box-shadow .15s ease;
-  }
+  input,textarea{padding:12px 14px; border:1px solid var(--line); border-radius:14px; background:#0B0C0E; color:var(--ink); resize:none; outline:none; transition:border-color .15s ease, box-shadow .15s ease}
   input:focus,textarea:focus{border-color:#2B2E34; box-shadow:0 0 0 3px rgba(209,15,47,.22)}
   .btn{padding:12px 14px; border-radius:14px; border:1px solid #8E0C21; background:linear-gradient(180deg,#E01538,#C70D2C); color:#fff; font-weight:800; cursor:pointer; box-shadow:0 12px 26px rgba(209,15,47,.35)}
   .btn.ghost{background:#0B0C0E; border-color:var(--line); color:var(--ink); box-shadow:none}
 
-  /* Chat area */
   #chat{display:flex; flex-direction:column; gap:10px; height:74vh; min-height:520px}
-  #messages{
-    flex:1; overflow:auto; border:1px solid var(--line); border-radius:16px; background:#0B0C0E;
-    padding:14px; display:flex; flex-direction:column; gap:8px; scroll-behavior:smooth;
-  }
+  #messages{flex:1; overflow:auto; border:1px solid var(--line); border-radius:16px; background:#0B0C0E; padding:14px; display:flex; flex-direction:column; gap:8px; scroll-behavior:smooth}
   .row{display:flex; gap:8px; align-items:flex-end}
   .me{justify-content:flex-end}
   .avatar{width:28px; height:28px; border-radius:50%; background:#222; flex:0 0 28px}
-  .bubble{
-    max-width:72%; padding:10px 12px; border-radius:18px; line-height:1.25; font-size:14px; position:relative; word-wrap:break-word;
-    border:1px solid rgba(255,255,255,.04);
-  }
+  .bubble{max-width:72%; padding:10px 12px; border-radius:18px; line-height:1.25; font-size:14px; position:relative; word-wrap:break-word; border:1px solid rgba(255,255,255,.04)}
   .bubble.me{background:var(--my); color:#fff; border-color:rgba(0,0,0,.08)}
   .bubble.their{background:var(--their); color:#e6e7ea}
   .meta{font-size:11px; color:#9aa0a6; margin-top:2px}
@@ -78,8 +64,6 @@
   .composer textarea{flex:1; height:48px}
   .action-row{display:flex; gap:8px; align-items:center}
   .file{border:1px dashed #3a3d44; padding:8px 10px; border-radius:10px; background:#0B0C0E; color:#c9cbd1}
-
-  /* Small utility */
   .hidden{display:none!important}
 </style>
 </head>
@@ -89,9 +73,9 @@
       <h1>College Team Chat</h1>
       <div class="seg">
         <div class="seg-box">
-          <button id="tabTeam" class="active">Team Chat</button>
-          <button id="tabAnn">Coach Announcements</button>
-          <button id="tabQna">Questions</button>
+          <button id="tabTeam" class="active">Team Chat <span id="bTeam" class="badge hidden">0</span></button>
+          <button id="tabAnn">Coach Announcements <span id="bAnn" class="badge hidden">0</span></button>
+          <button id="tabQna">Questions <span id="bQna" class="badge hidden">0</span></button>
         </div>
         <span id="whoami" class="pill">Not logged in</span>
       </div>
@@ -122,7 +106,6 @@
         <h3>Chat</h3>
         <div class="body" id="chat">
           <div id="messages"></div>
-
           <div class="composer" id="composer">
             <textarea id="text" placeholder="Message… (Enter to send)"></textarea>
             <div class="action-row">
@@ -133,7 +116,6 @@
               <button id="sendBtn" class="btn">Send</button>
             </div>
           </div>
-
           <div class="meta" id="roomNote"></div>
         </div>
       </div>
@@ -147,23 +129,21 @@ const REGION   = "us";
 const AUTH_KEY = "d20ca03513ab3c8c65c84f3429e7fd84a0deeb34";
 
 const GROUPS = {
-  team: { id: "team_chat",        name: "Team Chat",          note: "Anyone can post." },
-  ann:  { id: "announcements",    name: "Coach Announcements",note: "Only coaches can post here." },
-  qna:  { id: "questions",        name: "Questions",          note: "Ask and answer out loud." }
+  team: { id: "team_chat",     name: "Team Chat",           note: "Anyone can post." },
+  ann:  { id: "announcements", name: "Coach Announcements", note: "Only coaches can post here." },
+  qna:  { id: "questions",     name: "Questions",           note: "Ask and answer out loud." }
 };
 
-// who can post in Announcements (UIDs you’ll use to log in)
 const COACH_UIDS = ["coach_andrew", "agini"]; // add/remove as needed
 
 /* ===================== STATE ===================== */
-let me = { uid: null, name: null };
-let activeKey = "team"; // 'team' | 'ann' | 'qna'
-let messagesReq = null;
+let me = { uid: null, name: null, token: null };
+let activeKey = "team";
 let listenerId = "college-team-chat-listener";
+let unread = { team:0, ann:0, qna:0 };
 
 /* ===================== HELPERS ===================== */
-const $  = (sel) => document.querySelector(sel);
-const el = (tag, cls) => { const n=document.createElement(tag); if(cls) n.className=cls; return n; };
+const $  = s => document.querySelector(s);
 function isCoach(uid){ return COACH_UIDS.includes(uid); }
 function setActiveTab(key){
   activeKey = key;
@@ -172,48 +152,40 @@ function setActiveTab(key){
   $("#tabQna").classList.toggle("active",  key==="qna");
 }
 function setWho(){ $("#whoami").textContent = me.uid ? `Logged in as ${me.name} (${me.uid})` : "Not logged in"; }
-function fmtTime(ts){
-  try { const d = new Date(ts*1000 || ts); return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }
-  catch { return ""; }
-}
+function fmtTime(ts){ try{const d = new Date(ts*1000||ts); return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});}catch{return "";} }
 function scrollToBottom(){ const m=$("#messages"); m.scrollTop = m.scrollHeight; }
+function setBadge(key,val){
+  unread[key] = Math.max(0,val|0);
+  const map = {team:"#bTeam", ann:"#bAnn", qna:"#bQna"};
+  const el = $(map[key]);
+  if(unread[key] > 0){ el.textContent = unread[key]; el.classList.remove("hidden"); }
+  else { el.classList.add("hidden"); }
+}
 
 /* ===================== RENDER ===================== */
 function renderText({text, fromMe, sender, sentAt}){
-  const row = el("div","row"+(fromMe?" me":""));
-  const avatar = el("div","avatar"); if(!fromMe) row.appendChild(avatar);
-  const bubble = el("div","bubble "+(fromMe?"me":"their"));
-  bubble.textContent = text;
-  const meta = el("div","meta");
+  const row = document.createElement("div"); row.className = "row" + (fromMe ? " me" : "");
+  if(!fromMe){ const av = document.createElement("div"); av.className = "avatar"; row.appendChild(av); }
+  const bubble = document.createElement("div"); bubble.className = "bubble " + (fromMe ? "me" : "their"); bubble.textContent = text;
+  const meta = document.createElement("div"); meta.className = "meta";
   meta.textContent = fromMe ? fmtTime(sentAt) : `${sender?.name||sender?.uid||"Unknown"} • ${fmtTime(sentAt)}`;
-  const wrap = el("div");
-  wrap.appendChild(bubble);
-  wrap.appendChild(meta);
-  row.appendChild(wrap);
-  $("#messages").appendChild(row);
+  const wrap = document.createElement("div"); wrap.appendChild(bubble); wrap.appendChild(meta);
+  row.appendChild(wrap); $("#messages").appendChild(row);
 }
-
 function renderMedia({url, mime, fromMe, sender, sentAt}){
-  const row = el("div","row"+(fromMe?" me":""));
-  if(!fromMe) row.appendChild(el("div","avatar"));
-  const bubble = el("div","bubble "+(fromMe?"me":"their"));
-  if(mime.startsWith("image/")){
-    const img = new Image(); img.src = url; img.style.maxWidth="240px"; img.style.borderRadius="12px";
-    bubble.appendChild(img);
-  } else if(mime.startsWith("video/")){
-    const v = document.createElement("video"); v.src = url; v.controls = true; v.style.maxWidth="260px"; v.style.borderRadius="12px";
-    bubble.appendChild(v);
-  } else {
-    const a = document.createElement("a"); a.href=url; a.textContent="Download file"; a.target="_blank"; bubble.appendChild(a);
-  }
-  const meta = el("div","meta");
+  const row = document.createElement("div"); row.className = "row" + (fromMe ? " me" : "");
+  if(!fromMe){ const av = document.createElement("div"); av.className = "avatar"; row.appendChild(av); }
+  const bubble = document.createElement("div"); bubble.className = "bubble " + (fromMe ? "me" : "their");
+  if(mime.startsWith("image/")){ const img = new Image(); img.src = url; img.style.maxWidth="240px"; img.style.borderRadius="12px"; bubble.appendChild(img); }
+  else if(mime.startsWith("video/")){ const v = document.createElement("video"); v.src=url; v.controls=true; v.style.maxWidth="260px"; v.style.borderRadius="12px"; bubble.appendChild(v); }
+  else { const a = document.createElement("a"); a.href=url; a.textContent="Download file"; a.target="_blank"; bubble.appendChild(a); }
+  const meta = document.createElement("div"); meta.className = "meta";
   meta.textContent = fromMe ? fmtTime(sentAt) : `${sender?.name||sender?.uid||"Unknown"} • ${fmtTime(sentAt)}`;
-  const wrap = el("div"); wrap.appendChild(bubble); wrap.appendChild(meta);
-  row.appendChild(wrap);
-  $("#messages").appendChild(row);
+  const wrap = document.createElement("div"); wrap.appendChild(bubble); wrap.appendChild(meta);
+  row.appendChild(wrap); $("#messages").appendChild(row);
 }
 
-/* ===================== COMETCHAT SDK ===================== */
+/* ===================== SDK INIT + SESSION PERSISTENCE ===================== */
 async function initSDK(){
   const appSettings = new CometChat.AppSettingsBuilder()
     .subscribePresenceForAllUsers()
@@ -223,20 +195,55 @@ async function initSDK(){
   await CometChat.init(APP_ID, appSettings);
 }
 
+/* Keep users signed in on this device:
+   - After a successful login, we store UID, Name, and AuthToken in localStorage.
+   - On load, we try to restore with loginWithAuthToken(token).
+   - If token is missing/expired, we fallback to login(uid, AUTH_KEY).
+*/
+async function restoreSessionAndOpen(){
+  const uid  = localStorage.getItem("ct_uid");
+  const name = localStorage.getItem("ct_name");
+  const token= localStorage.getItem("ct_token");
+  if(!uid){ return; }
+
+  try{
+    if(token){
+      await CometChat.loginWithAuthToken(token);
+      me = { uid, name, token };
+    }else{
+      await CometChat.login(uid, AUTH_KEY);
+      const user = await CometChat.getLoggedinUser();
+      me = { uid, name, token: user?.authToken || null };
+      if(me.token) localStorage.setItem("ct_token", me.token);
+    }
+    setWho();
+    await openRoom(activeKey);
+    await refreshUnreadCounts(); // show badges on load
+  }catch(e){
+    console.warn("Session restore failed; user may need to login again.", e);
+    // clear bad token so next attempt can do normal login
+    localStorage.removeItem("ct_token");
+  }
+}
+
 async function ensureLogin(uid, name){
-  try {
+  try{
     await CometChat.login(uid, AUTH_KEY);
-  } catch {
-    // create then login
-    const user = new CometChat.User(uid);
-    user.setName(name);
+  }catch{
+    const user = new CometChat.User(uid); user.setName(name);
     await CometChat.createUser(user, AUTH_KEY);
     await CometChat.login(uid, AUTH_KEY);
   }
-  me = { uid, name };
+  const u = await CometChat.getLoggedinUser();
+  me = { uid, name, token: u?.authToken || null };
+  // store for persistence
+  localStorage.setItem("ct_uid", uid);
+  localStorage.setItem("ct_name", name);
+  if(me.token) localStorage.setItem("ct_token", me.token);
   setWho();
 }
 
+/* ===================== GROUP + LISTENERS ===================== */
 async function ensureGroup(gid, title){
   try { await CometChat.getGroup(gid); }
   catch {
@@ -247,64 +254,102 @@ async function ensureGroup(gid, title){
 }
 
 function attachMessageListener(gid){
-  // remove old listener if any
   CometChat.removeMessageListener(listenerId);
   CometChat.addMessageListener(
     listenerId,
     new CometChat.MessageListener({
-      onTextMessageReceived: (msg) => {
-        if(msg.getReceiverType() === "group" && msg.getReceiver().guid === gid){
-          renderText({ text: msg.getText(), fromMe: msg.getSender().uid===me.uid, sender: msg.getSender(), sentAt: msg.getSentAt() });
-          scrollToBottom();
-        }
-      },
-      onMediaMessageReceived: (msg) => {
-        if(msg.getReceiverType() === "group" && msg.getReceiver().guid === gid){
-          const file = msg.getAttachment(); // { fileUrl, fileMimeType }
-          renderMedia({ url: file.fileUrl, mime: file.fileMimeType, fromMe: msg.getSender().uid===me.uid, sender: msg.getSender(), sentAt: msg.getSentAt() });
-          scrollToBottom();
-        }
-      }
+      onTextMessageReceived: (msg) => handleIncoming(msg),
+      onMediaMessageReceived:(msg) => handleIncoming(msg)
     })
   );
+
+  function handleIncoming(msg){
+    if(msg.getReceiverType() !== "group") return;
+    const groupId = msg.getReceiver().guid;
+    const fromMe  = msg.getSender().uid===me.uid;
+
+    // If message belongs to currently open room -> render and (optionally) mark read
+    if(groupId === gid){
+      if(msg.getCategory()==="message"){
+        if(msg.getType()==="text"){
+          renderText({ text: msg.getText(), fromMe, sender: msg.getSender(), sentAt: msg.getSentAt() });
+        } else {
+          const a = msg.getAttachment();
+          renderMedia({ url:a.fileUrl, mime:a.fileMimeType, fromMe, sender:msg.getSender(), sentAt:msg.getSentAt() });
+        }
+        scrollToBottom();
+      }
+      // reset badge for this room
+      setBadge(activeKey, 0);
+    }else if(!fromMe){
+      // message for another room -> increment that room's badge
+      const key = roomKeyById(groupId);
+      if(key){ setBadge(key, unread[key]+1); }
+    }
+  }
 }
 
+function roomKeyById(id){
+  if(id===GROUPS.team.id) return "team";
+  if(id===GROUPS.ann.id)  return "ann";
+  if(id===GROUPS.qna.id)  return "qna";
+  return null;
+}
+
+/* ===================== HISTORY + OPEN ROOM ===================== */
 async function loadHistory(gid){
   $("#messages").innerHTML = "";
   const builder = new CometChat.MessagesRequestBuilder().setGUID(gid).setLimit(50);
-  messagesReq = builder.build();
-  const history = await messagesReq.fetchPrevious();
-  // Older first; render in chronological order
-  history.reverse().forEach(msg => {
-    if(msg.getCategory() === "message"){
-      if(msg.getType() === "text"){
-        renderText({ text: msg.getText(), fromMe: msg.getSender().uid===me.uid, sender: msg.getSender(), sentAt: msg.getSentAt() });
-      } else if(msg.getType() === "image" || msg.getType() === "video" || msg.getType() === "file"){
+  const req = builder.build();
+  const history = await req.fetchPrevious();
+  history.reverse().forEach(msg=>{
+    const fromMe = msg.getSender()?.uid===me.uid;
+    if(msg.getCategory()==="message"){
+      if(msg.getType()==="text"){
+        renderText({ text: msg.getText(), fromMe, sender: msg.getSender(), sentAt: msg.getSentAt() });
+      }else{
         const a = msg.getAttachment();
-        renderMedia({ url: a.fileUrl, mime: a.fileMimeType, fromMe: msg.getSender().uid===me.uid, sender: msg.getSender(), sentAt: msg.getSentAt() });
+        renderMedia({ url:a.fileUrl, mime:a.fileMimeType, fromMe, sender:msg.getSender(), sentAt:msg.getSentAt() });
       }
     }
   });
   scrollToBottom();
 }
 
-/* ===================== ROOM SWITCHING ===================== */
 async function openRoom(key){
   setActiveTab(key);
   const room = GROUPS[key];
   $("#roomNote").textContent = room.note;
 
-  // composer read-only for Announcements unless coach
   const readOnly = (key==="ann" && !isCoach(me.uid));
-  $("#text").disabled = readOnly;
-  $("#sendBtn").disabled = readOnly;
-  $("#file").disabled = readOnly;
-  if(readOnly){ $("#text").placeholder = "Read-only: coaches only"; }
-  else { $("#text").placeholder = "Message… (Enter to send)"; }
+  $("#text").disabled   = readOnly;
+  $("#sendBtn").disabled= readOnly;
+  $("#file").disabled   = readOnly;
+  $("#text").placeholder= readOnly ? "Read-only: coaches only" : "Message… (Enter to send)";
 
   await ensureGroup(room.id, room.name);
   await loadHistory(room.id);
   attachMessageListener(room.id);
+
+  // Clear badge when you view the room
+  setBadge(key, 0);
+}
+
+/* ===================== UNREAD COUNT (initial load) ===================== */
+async function refreshUnreadCounts(){
+  // Try SDK unread helpers if available; otherwise start at 0 (listener will keep them updated).
+  try{
+    const cTeam = await CometChat.getUnreadMessageCountForGroup(GROUPS.team.id);
+    setBadge("team", cTeam || 0);
+  }catch{}
+  try{
+    const cAnn  = await CometChat.getUnreadMessageCountForGroup(GROUPS.ann.id);
+    setBadge("ann", cAnn || 0);
+  }catch{}
+  try{
+    const cQna  = await CometChat.getUnreadMessageCountForGroup(GROUPS.qna.id);
+    setBadge("qna", cQna || 0);
+  }catch{}
 }
 
 /* ===================== SEND ===================== */
@@ -316,7 +361,6 @@ async function sendText(){
   await CometChat.sendMessage(msg);
   $("#text").value = "";
 }
-
 async function sendMedia(fileObj){
   const room = GROUPS[activeKey];
   const type = fileObj.type.startsWith("image/") ? CometChat.MESSAGE_TYPE.IMAGE :
@@ -326,32 +370,33 @@ async function sendMedia(fileObj){
   await CometChat.sendMessage(msg);
 }
 
-/* ===================== WIRING ===================== */
+/* ===================== UI WIRING ===================== */
 document.addEventListener("DOMContentLoaded", async () => {
   try { await initSDK(); } catch(e){ alert("CometChat init failed"); console.error(e); }
 
-  // Login
+  // Try to restore previous session automatically
+  await restoreSessionAndOpen();
+
   $("#loginBtn").onclick = async () => {
     const uid = $("#uid").value.trim();
-    const name = $("#name").value.trim();
+    const name= $("#name").value.trim();
     if(!uid || !name) return alert("Enter UID and Name");
     $("#loginBtn").disabled = true;
     $("#loginNote").textContent = "Signing in…";
     try{
       await ensureLogin(uid, name);
       $("#loginNote").textContent = "";
-      await openRoom(activeKey); // open Team by default
-    } catch(e){
+      await openRoom(activeKey);
+      await refreshUnreadCounts();
+    }catch(e){
       console.error(e); alert("Login failed. Check credentials in code.");
-    } finally { $("#loginBtn").disabled = false; }
+    }finally{ $("#loginBtn").disabled = false; }
   };
 
-  // Tabs
   $("#tabTeam").onclick = () => openRoom("team");
   $("#tabAnn").onclick  = () => openRoom("ann");
   $("#tabQna").onclick  = () => openRoom("qna");
 
-  // Composer
   $("#sendBtn").onclick = sendText;
   $("#text").addEventListener("keydown", (e)=>{
     if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendText(); }
