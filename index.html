@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>College Team Chat</title>
+
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#b30000">
+
+  <style>
+    :root{--ink:#0b0b0c;--red:#b30000}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial}
+    header{position:sticky;top:0;background:#fff;border-bottom:1px solid #eee;z-index:10}
+    .wrap{max-width:1100px;margin:0 auto;padding:14px}
+    h1{margin:6px 0 10px;font-size:20px}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .btn{padding:8px 12px;border:1px solid var(--ink);border-radius:8px;background:var(--ink);color:#fff;cursor:pointer}
+    .btn.subtle{background:#fff;color:var(--ink)}
+    .grid{display:grid;grid-template-columns:280px 1fr;gap:14px;padding:14px}
+    @media (max-width:900px){.grid{grid-template-columns:1fr}}
+    .panel{border:1px solid #eee;border-radius:12px;background:#fff}
+    .panel h3{margin:0;padding:10px 12px;border-bottom:1px solid #eee;font-size:14px}
+    .panel .body{padding:10px 12px}
+    #chatMount{height:70vh;border:1px solid #eee;border-radius:12px;overflow:hidden}
+    .field{display:flex;flex-direction:column;margin-bottom:10px}
+    .field label{font-size:12px;color:#555;margin-bottom:6px}
+    input,select{padding:10px;border:1px solid #ddd;border-radius:8px}
+    .note{font-size:13px;color:#555}
+    .pill{display:inline-block;padding:4px 8px;border:1px solid #ddd;border-radius:999px;font-size:12px;margin-right:6px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>College Team Chat</h1>
+      <div class="row">
+        <button class="btn" id="loginBtn">Log in</button>
+        <span id="whoami" class="pill">Not logged in</span>
+        <button id="openTeam" class="btn subtle">Open Team Chat</button>
+        <button id="openAnn" class="btn subtle">Open Announcements</button>
+      </div>
+      <p class="note">After login, open Team Chat (everyone) or Announcements (coach-only). Use the Directory to DM or create a small group.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="grid">
+      <!-- LEFT: Directory / DM / Small Groups -->
+      <div class="panel">
+        <h3>Directory & Quick Actions</h3>
+        <div class="body">
+          <div class="field">
+            <label>Login as (UID you created in CometChat, e.g., <b>p_john_smith</b>)</label>
+            <input id="uidInput" placeholder="UID, e.g., p_john_smith" />
+          </div>
+          <div class="field">
+            <label>Display name</label>
+            <input id="nameInput" placeholder="John Smith" />
+          </div>
+          <button id="doLogin" class="btn">Log in now</button>
+          <hr/>
+
+          <div class="field">
+            <label>Start a DM (enter UID)</label>
+            <input id="dmUid" placeholder="e.g., p_mary_lee" />
+          </div>
+          <button id="startDm" class="btn subtle">Open Direct Message</button>
+
+          <hr/>
+          <div class="field">
+            <label>Create a small group (comma-separated UIDs)</label>
+            <input id="groupUids" placeholder="p_mary_lee,p_john_smith" />
+          </div>
+          <div class="field">
+            <label>Group name</label>
+            <input id="groupName" placeholder="Forwards" />
+          </div>
+          <button id="makeSmallGroup" class="btn subtle">Create & Open Group</button>
+        </div>
+      </div>
+
+      <!-- RIGHT: Chat Mount -->
+      <div class="panel">
+        <h3>Chat</h3>
+        <div class="body">
+          <div id="chatMount"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- CometChat Widget SDK -->
+  <script src="https://widget-js.cometchat.io/v3/cometchatwidget.js"></script>
+  <script>
+    // ===== CONFIG with your keys =====
+    const CC_APP_ID  = "2808186f24275c0e";
+    const CC_REGION  = "us";
+    const CC_AUTHKEY = "d20ca03513ab3c8c65c84f3429e7fd84a0deeb34";
+
+    const GROUP_TEAM_ID = "college-team-chat";
+    const GROUP_ANN_ID  = "announcements";
+
+    let loggedInUID = null;
+
+    async function ccInit(){
+      await CometChatWidget.init({ appID: CC_APP_ID, appRegion: CC_REGION });
+    }
+    function setWho(s){ document.getElementById('whoami').textContent = s; }
+
+    async function ccLogin(uid, name){
+      try {
+        await CometChatWidget.login({ uid, authToken: CC_AUTHKEY });
+      } catch {
+        await CometChatWidget.createOrUpdateUser({ uid, name }, CC_AUTHKEY);
+        await CometChatWidget.login({ uid, authToken: CC_AUTHKEY });
+      }
+      loggedInUID = uid;
+      localStorage.setItem("ctc_uid", uid);
+      localStorage.setItem("ctc_name", name);
+      setWho("Logged in as: " + name + " (" + uid + ")");
+    }
+
+    async function ensureGroup(id, title, type="PUBLIC"){
+      const CC = CometChatWidget.CometChat;
+      try { await CC.getGroup(id); }
+      catch {
+        const g = new CC.Group(id, CC.GROUP_TYPE[type], title);
+        await CC.createGroup(g);
+      }
+    }
+
+    async function openGroup(id){
+      await CometChatWidget.launch({
+        widgetID: "default",
+        target: "#chatMount",
+        roundedCorners: "true",
+        height: "70vh",
+        width: "100%",
+        defaultID: id,
+        defaultType: "group"
+      });
+    }
+
+    async function openDM(uid){
+      await CometChatWidget.launch({
+        widgetID: "default",
+        target: "#chatMount",
+        roundedCorners: "true",
+        height: "70vh",
+        width: "100%",
+        defaultID: uid,
+        defaultType: "user"
+      });
+    }
+
+    // ===== UI wiring =====
+    (async () => {
+      await ccInit();
+
+      // autologin if saved
+      const suid = localStorage.getItem("ctc_uid");
+      const sname = localStorage.getItem("ctc_name");
+      if (suid && sname) {
+        await ccLogin(suid, sname);
+      } else {
+        setWho("Not logged in");
+      }
+
+      document.getElementById('doLogin').onclick = async () => {
+        const uid = document.getElementById('uidInput').value.trim();
+        const name = document.getElementById('nameInput').value.trim();
+        if (!uid || !name) return alert("Enter UID and Name");
+        await ccLogin(uid, name);
+      };
+
+      document.getElementById('openTeam').onclick = async () => {
+        await ensureGroup(GROUP_TEAM_ID, "Team Chat (All Players)");
+        await openGroup(GROUP_TEAM_ID);
+      };
+
+      document.getElementById('openAnn').onclick = async () => {
+        await ensureGroup(GROUP_ANN_ID, "Coach Announcements");
+        await openGroup(GROUP_ANN_ID);
+      };
+
+      document.getElementById('startDm').onclick = async () => {
+        const uid = document.getElementById('dmUid').value.trim();
+        if (!uid) return alert("Enter a UID to DM");
+        await openDM(uid);
+      };
+
+      document.getElementById('makeSmallGroup').onclick = async () => {
+        const list = document.getElementById('groupUids').value.trim();
+        const name = document.getElementById('groupName').value.trim() || "Small Group";
+        if (!list) return alert("Enter comma-separated UIDs");
+        const ids = list.split(",").map(s => s.trim()).filter(Boolean);
+        const CC = CometChatWidget.CometChat;
+        const gid = "grp_" + name.toLowerCase().replace(/[^a-z0-9]+/g,'_').slice(0,30);
+        await ensureGroup(gid, name);
+        const members = ids.map(uid => new CC.GroupMember(uid, CC.GROUP_MEMBER_SCOPE.PARTICIPANT));
+        try { await CC.addMembersToGroup(gid, members, []); } catch(e){}
+        await openGroup(gid);
+      };
+    })();
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/service-worker.js'); }
+  </script>
+</body>
+</html>
