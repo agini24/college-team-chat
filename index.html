@@ -1,116 +1,366 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>College Team Chat</title>
-  <meta name="theme-color" content="#D10F2F">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>College Team Chat</title>
+<meta name="theme-color" content="#D10F2F" />
 
-  <style>
-    body{margin:0;background:#0A0A0B;color:#fff;font-family:sans-serif}
-    header{padding:10px 20px;background:#111214;color:#fff;display:flex;align-items:center;justify-content:space-between}
-    h1{font-size:20px;margin:0}
-    .tabs{display:flex;gap:10px}
-    .tabs button{padding:8px 16px;border-radius:20px;border:none;background:#222;color:#bbb;cursor:pointer}
-    .tabs button.active{background:#D10F2F;color:#fff}
-    .pill{font-size:12px;color:#aaa}
-    main{display:flex;gap:20px;padding:20px}
-    .panel{background:#111214;padding:15px;border-radius:10px;flex:1}
-    .field{margin-bottom:10px}
-    label{display:block;font-size:12px;color:#aaa;margin-bottom:3px}
-    input{width:100%;padding:8px;border-radius:6px;border:1px solid #333;background:#0B0C0E;color:#fff}
-    button{padding:10px;border-radius:6px;border:none;background:#D10F2F;color:#fff;cursor:pointer}
-    #chatMount{height:70vh;min-height:400px;border:1px solid #333;border-radius:10px;overflow:hidden}
-  </style>
+<!-- CometChat JavaScript SDK -->
+<!-- If this specific version 3 loads slowly in your region, remove "@3" to use latest:  https://unpkg.com/@cometchat-pro/chat/CometChat.js -->
+<script src="https://unpkg.com/@cometchat-pro/chat@3/CometChat.js"></script>
+
+<style>
+  /* ===== Luxe black + red shell with iMessage-style bubbles ===== */
+  :root{
+    --bg:#0A0A0B; --panel:#111214; --ink:#EEEFF2; --muted:#A1A5AD; --line:#24262B;
+    --accent:#D10F2F; --accent-ink:#fff; --my:#E01538; --their:#1C1E22;
+    --radius:18px; --shadow:0 18px 50px rgba(0,0,0,.35); --font: ui-sans-serif,-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:radial-gradient(1200px 800px at 70% -10%,#111214 0%,#0A0A0B 60%,#070708 100%);
+    color:var(--ink); font-family:var(--font); -webkit-font-smoothing:antialiased;
+  }
+
+  header{
+    position:sticky; top:0; z-index:30;
+    background:linear-gradient(180deg, rgba(10,10,11,.85), rgba(10,10,11,.55));
+    backdrop-filter:blur(10px) saturate(1.25);
+    border-bottom:1px solid var(--line);
+  }
+  .wrap{max-width:1200px; margin:0 auto; padding:12px 16px}
+  h1{margin:2px 0 10px; font-size:20px; letter-spacing:.3px}
+
+  /* Segmented tabs */
+  .seg{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+  .seg-box{display:inline-flex; gap:6px; padding:6px; background:#0E0F11; border:1px solid var(--line); border-radius:999px; box-shadow:var(--shadow)}
+  .seg button{appearance:none; border:0; cursor:pointer; padding:9px 16px; border-radius:999px; font-weight:700; color:#9aa0a6; background:transparent; transition:.15s ease}
+  .seg button.active{background:linear-gradient(180deg,#E01538,#C70D2C); color:#fff; box-shadow:0 10px 30px rgba(209,15,47,.35)}
+  .pill{margin-left:auto; display:inline-flex; align-items:center; gap:8px; padding:7px 12px; border:1px solid var(--line); border-radius:999px; font-size:12px; color:var(--muted); background:linear-gradient(180deg,#0F1012,#0C0D0F)}
+
+  main{padding:16px}
+  .grid{max-width:1200px; margin:0 auto; display:grid; grid-template-columns:340px 1fr; gap:16px}
+  @media (max-width:1000px){.grid{grid-template-columns:1fr}}
+
+  .panel{border:1px solid var(--line); border-radius:18px; background:linear-gradient(180deg,#111214,#0E0F11); box-shadow:var(--shadow)}
+  .panel h3{margin:0; padding:12px 14px; border-bottom:1px solid var(--line); font-size:13px; color:#b8bdc7; font-weight:800; letter-spacing:.35px; text-transform:uppercase}
+  .panel .body{padding:12px 14px}
+
+  .field{display:flex; flex-direction:column; gap:6px; margin-bottom:12px}
+  .field label{font-size:12px; color:var(--muted)}
+  input,textarea{
+    padding:12px 14px; border:1px solid var(--line); border-radius:14px; background:#0B0C0E; color:var(--ink); resize:none;
+    outline:none; transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  input:focus,textarea:focus{border-color:#2B2E34; box-shadow:0 0 0 3px rgba(209,15,47,.22)}
+  .btn{padding:12px 14px; border-radius:14px; border:1px solid #8E0C21; background:linear-gradient(180deg,#E01538,#C70D2C); color:#fff; font-weight:800; cursor:pointer; box-shadow:0 12px 26px rgba(209,15,47,.35)}
+  .btn.ghost{background:#0B0C0E; border-color:var(--line); color:var(--ink); box-shadow:none}
+
+  /* Chat area */
+  #chat{display:flex; flex-direction:column; gap:10px; height:74vh; min-height:520px}
+  #messages{
+    flex:1; overflow:auto; border:1px solid var(--line); border-radius:16px; background:#0B0C0E;
+    padding:14px; display:flex; flex-direction:column; gap:8px; scroll-behavior:smooth;
+  }
+  .row{display:flex; gap:8px; align-items:flex-end}
+  .me{justify-content:flex-end}
+  .avatar{width:28px; height:28px; border-radius:50%; background:#222; flex:0 0 28px}
+  .bubble{
+    max-width:72%; padding:10px 12px; border-radius:18px; line-height:1.25; font-size:14px; position:relative; word-wrap:break-word;
+    border:1px solid rgba(255,255,255,.04);
+  }
+  .bubble.me{background:var(--my); color:#fff; border-color:rgba(0,0,0,.08)}
+  .bubble.their{background:var(--their); color:#e6e7ea}
+  .meta{font-size:11px; color:#9aa0a6; margin-top:2px}
+  .composer{display:flex; gap:10px; align-items:flex-end}
+  .composer textarea{flex:1; height:48px}
+  .action-row{display:flex; gap:8px; align-items:center}
+  .file{border:1px dashed #3a3d44; padding:8px 10px; border-radius:10px; background:#0B0C0E; color:#c9cbd1}
+
+  /* Small utility */
+  .hidden{display:none!important}
+</style>
 </head>
 <body>
   <header>
-    <h1>College Team Chat</h1>
-    <div class="tabs">
-      <button id="tabTeam" class="active">Team Chat</button>
-      <button id="tabAnn">Coach Announcements</button>
-      <button id="tabQna">Questions</button>
+    <div class="wrap">
+      <h1>College Team Chat</h1>
+      <div class="seg">
+        <div class="seg-box">
+          <button id="tabTeam" class="active">Team Chat</button>
+          <button id="tabAnn">Coach Announcements</button>
+          <button id="tabQna">Questions</button>
+        </div>
+        <span id="whoami" class="pill">Not logged in</span>
+      </div>
     </div>
-    <span id="whoami" class="pill">Not logged in</span>
   </header>
 
   <main>
-    <div class="panel" style="max-width:300px">
-      <h3>Login</h3>
-      <div class="field">
-        <label>UID (e.g., p_john)</label>
-        <input id="uidInput" />
+    <div class="grid">
+      <!-- LEFT -->
+      <div class="panel">
+        <h3>Login</h3>
+        <div class="body">
+          <div class="field">
+            <label>UID (e.g., p_john)</label>
+            <input id="uid" placeholder="p_john" />
+          </div>
+          <div class="field">
+            <label>Display name</label>
+            <input id="name" placeholder="John Smith" />
+          </div>
+          <button id="loginBtn" class="btn">Log in now</button>
+          <p class="meta" id="loginNote"></p>
+        </div>
       </div>
-      <div class="field">
-        <label>Display name</label>
-        <input id="nameInput" />
-      </div>
-      <button id="doLogin">Log in now</button>
-    </div>
 
-    <div class="panel" style="flex:2">
-      <h3>Chat</h3>
-      <div id="chatMount"></div>
+      <!-- RIGHT -->
+      <div class="panel">
+        <h3>Chat</h3>
+        <div class="body" id="chat">
+          <div id="messages"></div>
+
+          <div class="composer" id="composer">
+            <textarea id="text" placeholder="Message… (Enter to send)"></textarea>
+            <div class="action-row">
+              <label class="file">
+                <input type="file" id="file" accept="image/*,video/*" style="display:none">
+                + Add media
+              </label>
+              <button id="sendBtn" class="btn">Send</button>
+            </div>
+          </div>
+
+          <div class="meta" id="roomNote"></div>
+        </div>
+      </div>
     </div>
   </main>
 
-  <!-- CometChat Widget SDK -->
-  <script src="https://widget-js.cometchat.io/v3/cometchatwidget.js"></script>
-  <script>
-    const CC_APP_ID  = "2808186f24275c0e";
-    const CC_REGION  = "us";
-    const CC_AUTHKEY = "d20ca03513ab3c8c65c84f3429e7fd84a0deeb34";
+<script>
+/* ===================== CONFIG ===================== */
+const APP_ID   = "2808186f24275c0e";
+const REGION   = "us";
+const AUTH_KEY = "d20ca03513ab3c8c65c84f3429e7fd84a0deeb34";
 
-    const GROUP_TEAM = {id:"team_chat", name:"Team Chat"};
-    const GROUP_ANN  = {id:"announcements", name:"Coach Announcements"};
-    const GROUP_QNA  = {id:"questions", name:"Questions"};
+const GROUPS = {
+  team: { id: "team_chat",        name: "Team Chat",          note: "Anyone can post." },
+  ann:  { id: "announcements",    name: "Coach Announcements",note: "Only coaches can post here." },
+  qna:  { id: "questions",        name: "Questions",          note: "Ask and answer out loud." }
+};
 
-    let activeGroup = GROUP_TEAM;
+// who can post in Announcements (UIDs you’ll use to log in)
+const COACH_UIDS = ["coach_andrew", "agini"]; // add/remove as needed
 
-    const $ = s => document.querySelector(s);
+/* ===================== STATE ===================== */
+let me = { uid: null, name: null };
+let activeKey = "team"; // 'team' | 'ann' | 'qna'
+let messagesReq = null;
+let listenerId = "college-team-chat-listener";
 
-    function setActiveTab(tab){
-      $("#tabTeam").classList.toggle("active", tab==="team");
-      $("#tabAnn").classList.toggle("active", tab==="ann");
-      $("#tabQna").classList.toggle("active", tab==="qna");
-    }
+/* ===================== HELPERS ===================== */
+const $  = (sel) => document.querySelector(sel);
+const el = (tag, cls) => { const n=document.createElement(tag); if(cls) n.className=cls; return n; };
+function isCoach(uid){ return COACH_UIDS.includes(uid); }
+function setActiveTab(key){
+  activeKey = key;
+  $("#tabTeam").classList.toggle("active", key==="team");
+  $("#tabAnn").classList.toggle("active",  key==="ann");
+  $("#tabQna").classList.toggle("active",  key==="qna");
+}
+function setWho(){ $("#whoami").textContent = me.uid ? `Logged in as ${me.name} (${me.uid})` : "Not logged in"; }
+function fmtTime(ts){
+  try { const d = new Date(ts*1000 || ts); return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }
+  catch { return ""; }
+}
+function scrollToBottom(){ const m=$("#messages"); m.scrollTop = m.scrollHeight; }
 
-    async function openGroup(group){
-      const CC = CometChatWidget.CometChat;
-      try { await CC.getGroup(group.id); }
-      catch { await CC.createGroup(new CC.Group(group.id, CC.GROUP_TYPE.PUBLIC, group.name)); }
-      try { await CC.joinGroup(group.id, CC.GROUP_TYPE.PUBLIC, ""); } catch(e){}
-      await CometChatWidget.launch({
-        widgetID:"default",
-        target:"#chatMount",
-        roundedCorners:"true",
-        height:"100%",
-        width:"100%",
-        defaultID:group.id,
-        defaultType:"group"
-      });
-    }
+/* ===================== RENDER ===================== */
+function renderText({text, fromMe, sender, sentAt}){
+  const row = el("div","row"+(fromMe?" me":""));
+  const avatar = el("div","avatar"); if(!fromMe) row.appendChild(avatar);
+  const bubble = el("div","bubble "+(fromMe?"me":"their"));
+  bubble.textContent = text;
+  const meta = el("div","meta");
+  meta.textContent = fromMe ? fmtTime(sentAt) : `${sender?.name||sender?.uid||"Unknown"} • ${fmtTime(sentAt)}`;
+  const wrap = el("div");
+  wrap.appendChild(bubble);
+  wrap.appendChild(meta);
+  row.appendChild(wrap);
+  $("#messages").appendChild(row);
+}
 
-    (async () => {
-      await CometChatWidget.init({ appID:CC_APP_ID, appRegion:CC_REGION, authKey:CC_AUTHKEY });
-    })();
+function renderMedia({url, mime, fromMe, sender, sentAt}){
+  const row = el("div","row"+(fromMe?" me":""));
+  if(!fromMe) row.appendChild(el("div","avatar"));
+  const bubble = el("div","bubble "+(fromMe?"me":"their"));
+  if(mime.startsWith("image/")){
+    const img = new Image(); img.src = url; img.style.maxWidth="240px"; img.style.borderRadius="12px";
+    bubble.appendChild(img);
+  } else if(mime.startsWith("video/")){
+    const v = document.createElement("video"); v.src = url; v.controls = true; v.style.maxWidth="260px"; v.style.borderRadius="12px";
+    bubble.appendChild(v);
+  } else {
+    const a = document.createElement("a"); a.href=url; a.textContent="Download file"; a.target="_blank"; bubble.appendChild(a);
+  }
+  const meta = el("div","meta");
+  meta.textContent = fromMe ? fmtTime(sentAt) : `${sender?.name||sender?.uid||"Unknown"} • ${fmtTime(sentAt)}`;
+  const wrap = el("div"); wrap.appendChild(bubble); wrap.appendChild(meta);
+  row.appendChild(wrap);
+  $("#messages").appendChild(row);
+}
 
-    $("#doLogin").onclick = async () => {
-      const uid = $("#uidInput").value.trim();
-      const name = $("#nameInput").value.trim();
-      if(!uid||!name) return alert("Enter UID and Name");
-      try{ await CometChatWidget.login({uid}); }
-      catch{ 
-        await CometChatWidget.createOrUpdateUser({uid,name},CC_AUTHKEY);
-        await CometChatWidget.login({uid}); 
+/* ===================== COMETCHAT SDK ===================== */
+async function initSDK(){
+  const appSettings = new CometChat.AppSettingsBuilder()
+    .subscribePresenceForAllUsers()
+    .setRegion(REGION)
+    .autoEstablishSocketConnection(true)
+    .build();
+  await CometChat.init(APP_ID, appSettings);
+}
+
+async function ensureLogin(uid, name){
+  try {
+    await CometChat.login(uid, AUTH_KEY);
+  } catch {
+    // create then login
+    const user = new CometChat.User(uid);
+    user.setName(name);
+    await CometChat.createUser(user, AUTH_KEY);
+    await CometChat.login(uid, AUTH_KEY);
+  }
+  me = { uid, name };
+  setWho();
+}
+
+async function ensureGroup(gid, title){
+  try { await CometChat.getGroup(gid); }
+  catch {
+    const group = new CometChat.Group(gid, title, CometChat.GROUP_TYPE.PUBLIC);
+    await CometChat.createGroup(group);
+  }
+  try { await CometChat.joinGroup(gid, CometChat.GROUP_TYPE.PUBLIC, ""); } catch(e) { /* already member */ }
+}
+
+function attachMessageListener(gid){
+  // remove old listener if any
+  CometChat.removeMessageListener(listenerId);
+  CometChat.addMessageListener(
+    listenerId,
+    new CometChat.MessageListener({
+      onTextMessageReceived: (msg) => {
+        if(msg.getReceiverType() === "group" && msg.getReceiver().guid === gid){
+          renderText({ text: msg.getText(), fromMe: msg.getSender().uid===me.uid, sender: msg.getSender(), sentAt: msg.getSentAt() });
+          scrollToBottom();
+        }
+      },
+      onMediaMessageReceived: (msg) => {
+        if(msg.getReceiverType() === "group" && msg.getReceiver().guid === gid){
+          const file = msg.getAttachment(); // { fileUrl, fileMimeType }
+          renderMedia({ url: file.fileUrl, mime: file.fileMimeType, fromMe: msg.getSender().uid===me.uid, sender: msg.getSender(), sentAt: msg.getSentAt() });
+          scrollToBottom();
+        }
       }
-      $("#whoami").textContent = `Logged in as ${name} (${uid})`;
-      openGroup(GROUP_TEAM);
-    };
+    })
+  );
+}
 
-    $("#tabTeam").onclick = () => {setActiveTab("team"); openGroup(GROUP_TEAM);};
-    $("#tabAnn").onclick  = () => {setActiveTab("ann"); openGroup(GROUP_ANN);};
-    $("#tabQna").onclick  = () => {setActiveTab("qna"); openGroup(GROUP_QNA);};
-  </script>
+async function loadHistory(gid){
+  $("#messages").innerHTML = "";
+  const builder = new CometChat.MessagesRequestBuilder().setGUID(gid).setLimit(50);
+  messagesReq = builder.build();
+  const history = await messagesReq.fetchPrevious();
+  // Older first; render in chronological order
+  history.reverse().forEach(msg => {
+    if(msg.getCategory() === "message"){
+      if(msg.getType() === "text"){
+        renderText({ text: msg.getText(), fromMe: msg.getSender().uid===me.uid, sender: msg.getSender(), sentAt: msg.getSentAt() });
+      } else if(msg.getType() === "image" || msg.getType() === "video" || msg.getType() === "file"){
+        const a = msg.getAttachment();
+        renderMedia({ url: a.fileUrl, mime: a.fileMimeType, fromMe: msg.getSender().uid===me.uid, sender: msg.getSender(), sentAt: msg.getSentAt() });
+      }
+    }
+  });
+  scrollToBottom();
+}
+
+/* ===================== ROOM SWITCHING ===================== */
+async function openRoom(key){
+  setActiveTab(key);
+  const room = GROUPS[key];
+  $("#roomNote").textContent = room.note;
+
+  // composer read-only for Announcements unless coach
+  const readOnly = (key==="ann" && !isCoach(me.uid));
+  $("#text").disabled = readOnly;
+  $("#sendBtn").disabled = readOnly;
+  $("#file").disabled = readOnly;
+  if(readOnly){ $("#text").placeholder = "Read-only: coaches only"; }
+  else { $("#text").placeholder = "Message… (Enter to send)"; }
+
+  await ensureGroup(room.id, room.name);
+  await loadHistory(room.id);
+  attachMessageListener(room.id);
+}
+
+/* ===================== SEND ===================== */
+async function sendText(){
+  const t = $("#text").value.trim();
+  if(!t) return;
+  const room = GROUPS[activeKey];
+  const msg = new CometChat.TextMessage(room.id, t, CometChat.RECEIVER_TYPE.GROUP);
+  await CometChat.sendMessage(msg);
+  $("#text").value = "";
+}
+
+async function sendMedia(fileObj){
+  const room = GROUPS[activeKey];
+  const type = fileObj.type.startsWith("image/") ? CometChat.MESSAGE_TYPE.IMAGE :
+               fileObj.type.startsWith("video/") ? CometChat.MESSAGE_TYPE.VIDEO :
+               CometChat.MESSAGE_TYPE.FILE;
+  const msg = new CometChat.MediaMessage(room.id, fileObj, type, CometChat.RECEIVER_TYPE.GROUP);
+  await CometChat.sendMessage(msg);
+}
+
+/* ===================== WIRING ===================== */
+document.addEventListener("DOMContentLoaded", async () => {
+  try { await initSDK(); } catch(e){ alert("CometChat init failed"); console.error(e); }
+
+  // Login
+  $("#loginBtn").onclick = async () => {
+    const uid = $("#uid").value.trim();
+    const name = $("#name").value.trim();
+    if(!uid || !name) return alert("Enter UID and Name");
+    $("#loginBtn").disabled = true;
+    $("#loginNote").textContent = "Signing in…";
+    try{
+      await ensureLogin(uid, name);
+      $("#loginNote").textContent = "";
+      await openRoom(activeKey); // open Team by default
+    } catch(e){
+      console.error(e); alert("Login failed. Check credentials in code.");
+    } finally { $("#loginBtn").disabled = false; }
+  };
+
+  // Tabs
+  $("#tabTeam").onclick = () => openRoom("team");
+  $("#tabAnn").onclick  = () => openRoom("ann");
+  $("#tabQna").onclick  = () => openRoom("qna");
+
+  // Composer
+  $("#sendBtn").onclick = sendText;
+  $("#text").addEventListener("keydown", (e)=>{
+    if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendText(); }
+  });
+  $("#file").addEventListener("change", async (e)=>{
+    const f = e.target.files?.[0]; if(!f) return;
+    try{ await sendMedia(f); } finally { e.target.value=""; }
+  });
+});
+</script>
 </body>
 </html>
