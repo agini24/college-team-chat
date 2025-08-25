@@ -6,31 +6,112 @@
   <title>College Team Chat</title>
 
   <link rel="manifest" href="/manifest.webmanifest">
-  <meta name="theme-color" content="#b30000">
+  <meta name="theme-color" content="#D10F2F">
 
   <style>
-    :root{--ink:#0b0b0c;--red:#b30000}
+    /* ------- Luxe Black/Red iMessage-inspired shell ------- */
+    :root{
+      --bg:#0A0A0B;           /* near-black background */
+      --surface:#111214;      /* card surface */
+      --elev:#16181B;         /* elevated surface */
+      --ink:#EDEEF0;          /* primary text */
+      --muted:#A1A5AD;       /* secondary text */
+      --line:#23262B;        /* borders */
+      --accent:#D10F2F;      /* deep luxury red */
+      --accent-ink:#fff;
+      --radius:18px;
+      --shadow:0 16px 48px rgba(0,0,0,.35);
+      --font: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+              "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
     *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial}
-    header{position:sticky;top:0;background:#fff;border-bottom:1px solid #eee;z-index:10}
-    .wrap{max-width:1100px;margin:0 auto;padding:14px}
-    h1{margin:6px 0 10px;font-size:20px}
-    .tabs{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .tab{padding:8px 12px;border:1px solid #ddd;border-radius:999px;background:#fff;cursor:pointer}
-    .tab.active{border-color:var(--red);color:#fff;background:var(--red)}
-    .pill{margin-left:auto;display:inline-block;padding:4px 8px;border:1px solid #ddd;border-radius:999px;font-size:12px}
-    .grid{display:grid;grid-template-columns:280px 1fr;gap:14px;padding:14px}
-    @media (max-width:900px){.grid{grid-template-columns:1fr}}
-    .panel{border:1px solid #eee;border-radius:12px;background:#fff}
-    .panel h3{margin:0;padding:10px 12px;border-bottom:1px solid #eee;font-size:14px}
-    .panel .body{padding:10px 12px}
-    #chatMount{height:70vh;border:1px solid #eee;border-radius:12px;overflow:hidden}
-    .field{display:flex;flex-direction:column;margin-bottom:10px}
-    .field label{font-size:12px;color:#555;margin-bottom:6px}
-    input{padding:10px;border:1px solid #ddd;border-radius:8px}
-    .btn{padding:10px 12px;border:1px solid var(--ink);border-radius:8px;background:var(--ink);color:#fff;cursor:pointer}
-    .btn.ghost{background:#fff;color:var(--ink)}
-    .note{font-size:13px;color:#555}
+    html,body{height:100%}
+    body{
+      margin:0;background:radial-gradient(1200px 800px at 70% -10%,#111214 0%,#0A0A0B 60%,#070708 100%);
+      color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased;letter-spacing:.2px;
+    }
+
+    /* Header */
+    header{
+      position:sticky;top:0;z-index:20;
+      background:linear-gradient(180deg, rgba(10,10,11,.8), rgba(10,10,11,.55));
+      backdrop-filter: blur(10px) saturate(1.25);
+      border-bottom:1px solid var(--line);
+    }
+    .wrap{max-width:1200px;margin:0 auto;padding:14px 18px}
+    h1{margin:2px 0 10px;font-size:20px;font-weight:700;letter-spacing:.3px}
+
+    /* Segmented tabs — iOS feel with luxe styling */
+    .seg{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+    .seg-box{
+      display:inline-flex;gap:6px;padding:6px;
+      background:#0E0F11;border:1px solid var(--line);
+      border-radius:999px;box-shadow:var(--shadow);
+    }
+    .seg button{
+      appearance:none;border:0;cursor:pointer;
+      padding:9px 16px;border-radius:999px;font-weight:700;
+      color:var(--muted);background:transparent;transition:.15s ease;
+    }
+    .seg button.active{
+      background:linear-gradient(180deg, #E01538, #C70D2C);
+      color:var(--accent-ink);box-shadow:0 10px 30px rgba(209,15,47,.35);
+    }
+    .pill{
+      margin-left:auto;display:inline-flex;align-items:center;
+      gap:8px;padding:7px 12px;border:1px solid var(--line);
+      border-radius:999px;font-size:12px;color:var(--muted);
+      background:linear-gradient(180deg,#0F1012,#0C0D0F);
+    }
+
+    /* Layout */
+    main{padding:18px}
+    .grid{
+      max-width:1200px;margin:0 auto;
+      display:grid;grid-template-columns:360px 1fr;gap:18px;
+    }
+    @media (max-width:1080px){.grid{grid-template-columns:1fr}}
+    .panel{
+      border:1px solid var(--line);border-radius:var(--radius);
+      background:linear-gradient(180deg,#111214,#0E0F11);box-shadow:var(--shadow);
+    }
+    .panel h3{
+      margin:0;padding:14px 16px;border-bottom:1px solid var(--line);
+      font-size:13px;color:var(--muted);font-weight:800;letter-spacing:.35px;text-transform:uppercase;
+    }
+    .panel .body{padding:14px 16px}
+
+    /* Fields & buttons */
+    .field{display:flex;flex-direction:column;margin-bottom:12px}
+    .field label{font-size:12px;color:var(--muted);margin-bottom:6px}
+    input{
+      padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#0B0C0E;color:var(--ink);
+      outline:none;transition:border-color .15s ease, box-shadow .15s ease;
+    }
+    input::placeholder{color:#7C818A}
+    input:focus{border-color:#2B2E34;box-shadow:0 0 0 3px rgba(209,15,47,.25)}
+
+    .btn{
+      padding:12px 14px;border-radius:14px;border:1px solid #8E0C21;
+      background:linear-gradient(180deg, #E01538, #C70D2C);color:#fff;font-weight:800;cursor:pointer;
+      box-shadow:0 12px 28px rgba(209,15,47,.35);transition:transform .04s ease, filter .15s ease;
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn.ghost{
+      background:#0B0C0E;color:var(--ink);border-color:var(--line);
+      box-shadow:none;
+    }
+    .btn.ghost:hover{filter:brightness(1.08)}
+
+    /* Chat mount */
+    #chatMount{
+      height:76vh;min-height:520px;border:1px solid var(--line);
+      border-radius:16px;overflow:hidden;background:#0B0C0E;
+    }
+    @media (min-height:900px){#chatMount{height:80vh}}
+
+    /* Thin separators */
+    .rule{border:none;border-top:1px solid var(--line);margin:16px 0}
   </style>
 </head>
 <body>
@@ -38,26 +119,26 @@
     <div class="wrap">
       <h1>College Team Chat</h1>
 
-      <!-- TABS -->
-      <div class="tabs" id="tabs">
-        <button class="tab active" id="tabTeam">Team Chat</button>
-        <button class="tab" id="tabAnn">Coach Announcements</button>
-        <button class="tab" id="tabQna">Questions</button>
+      <!-- Segmented control -->
+      <div class="seg" id="tabs">
+        <div class="seg-box" role="tablist" aria-label="Chat sections">
+          <button class="active" id="tabTeam" role="tab" aria-selected="true">Team Chat</button>
+          <button id="tabAnn" role="tab" aria-selected="false">Coach Announcements</button>
+          <button id="tabQna" role="tab" aria-selected="false">Questions</button>
+        </div>
         <span id="whoami" class="pill">Not logged in</span>
       </div>
-
-      <p class="note">Log in below. Then use the tabs to switch between the three rooms. DM and small groups are on the left.</p>
     </div>
   </header>
 
-  <main class="wrap">
+  <main>
     <div class="grid">
-      <!-- LEFT: Login / DM / Small groups -->
+      <!-- LEFT: Login / DM / Groups -->
       <div class="panel">
         <h3>Login & Quick Actions</h3>
         <div class="body">
           <div class="field">
-            <label>UID (your CometChat user id, e.g. <b>p_john</b> or <b>coach_andrew</b>)</label>
+            <label>UID (e.g., <b>p_john</b> or <b>coach_andrew</b>)</label>
             <input id="uidInput" placeholder="e.g., p_john" />
           </div>
           <div class="field">
@@ -65,15 +146,17 @@
             <input id="nameInput" placeholder="John Smith" />
           </div>
           <button id="doLogin" class="btn">Log in now</button>
-          <hr/>
+
+          <hr class="rule"/>
 
           <div class="field">
-            <label>Start a direct message (enter UID)</label>
+            <label>Direct message (enter UID)</label>
             <input id="dmUid" placeholder="e.g., p_mary" />
           </div>
           <button id="startDm" class="btn ghost">Open Direct Message</button>
 
-          <hr/>
+          <hr class="rule"/>
+
           <div class="field">
             <label>Create a small group (comma-separated UIDs)</label>
             <input id="groupUids" placeholder="p_mary,p_john,p_ali" />
@@ -86,7 +169,7 @@
         </div>
       </div>
 
-      <!-- RIGHT: Chat pane -->
+      <!-- RIGHT: Chat -->
       <div class="panel">
         <h3>Chat</h3>
         <div class="body">
@@ -104,13 +187,13 @@
     const CC_REGION  = "us";
     const CC_AUTHKEY = "d20ca03513ab3c8c65c84f3429e7fd84a0deeb34";
 
-    // Group IDs
+    // Groups
     const GROUP_TEAM_ID = "team_chat";
     const GROUP_ANN_ID  = "announcements";
     const GROUP_QNA_ID  = "questions";
 
-    // Coach accounts (composer stays enabled in Announcements for these UIDs)
-    const COACH_UIDS = ["coach_andrew"]; // <— add more coach UIDs here
+    // Coach UIDs (to keep Announcements composer enabled)
+    const COACH_UIDS = ["coach_andrew"]; // add more coach UIDs as needed
 
     /*************** STATE ***************/
     let loggedInUID = null;
@@ -118,7 +201,7 @@
     let activeTab = "team"; // team | ann | qna
 
     /*************** HELPERS ***************/
-    const $ = sel => document.querySelector(sel);
+    const $ = s => document.querySelector(s);
     function isCoach(uid){ return COACH_UIDS.includes(uid); }
     function setWho(s){ $("#whoami").textContent = s; }
     function setActiveTab(which){
@@ -126,9 +209,12 @@
       $("#tabTeam").classList.toggle("active", which==="team");
       $("#tabAnn").classList.toggle("active", which==="ann");
       $("#tabQna").classList.toggle("active", which==="qna");
+      $("#tabTeam").setAttribute("aria-selected", which==="team");
+      $("#tabAnn").setAttribute("aria-selected", which==="ann");
+      $("#tabQna").setAttribute("aria-selected", which==="qna");
     }
 
-    // Hide message composer inside widget (for read-only experience)
+    // Hide message composer for non-coaches in Announcements (UI side)
     function hideComposerIfNeeded(){
       if (activeTab !== "ann" || isCoach(loggedInUID)) return;
       const attempt = () => {
@@ -138,7 +224,7 @@
           if (container) container.style.display = "none";
         }
       };
-      attempt(); setTimeout(attempt, 300); setTimeout(attempt, 1000);
+      attempt(); setTimeout(attempt, 250); setTimeout(attempt, 800);
     }
 
     async function ensureGroup(id, title, type="PUBLIC"){
@@ -156,7 +242,7 @@
         widgetID: "default",
         target: "#chatMount",
         roundedCorners: "true",
-        height: "70vh",
+        height: "100%",
         width: "100%",
         defaultID: id,
         defaultType: "group"
@@ -169,7 +255,7 @@
         widgetID: "default",
         target: "#chatMount",
         roundedCorners: "true",
-        height: "70vh",
+        height: "100%",
         width: "100%",
         defaultID: uid,
         defaultType: "user"
@@ -179,9 +265,8 @@
     /*************** INIT + LOGIN ***************/
     (async () => {
       try {
-        // include authKey here so the widget can use it internally
+        // Provide authKey at init so widget can use it internally
         await CometChatWidget.init({ appID: CC_APP_ID, appRegion: CC_REGION, authKey: CC_AUTHKEY });
-        console.log("CometChat Widget: initialised successfully");
         widgetReady = true;
 
         const suid = localStorage.getItem("ctc_uid");
@@ -198,7 +283,7 @@
       try {
         await CometChatWidget.login({ uid });
       } catch (e) {
-        // If user doesn't exist yet, create then login
+        // auto-create if missing
         await CometChatWidget.createOrUpdateUser({ uid, name }, CC_AUTHKEY);
         await CometChatWidget.login({ uid });
       }
@@ -207,14 +292,13 @@
       localStorage.setItem("ctc_name", name);
       setWho("Logged in as: " + name + " (" + uid + ")");
 
-      // Open the active tab after login
+      // open current tab after login
       if (activeTab === "ann") openGroup(GROUP_ANN_ID, "Coach Announcements");
       else if (activeTab === "qna") openGroup(GROUP_QNA_ID, "Questions");
       else openGroup(GROUP_TEAM_ID, "Team Chat (All Players)");
     }
 
     /*************** UI EVENTS ***************/
-    // Login
     $("#doLogin").onclick = async () => {
       const uid = $("#uidInput").value.trim();
       const name = $("#nameInput").value.trim();
@@ -222,17 +306,16 @@
       await ccLogin(uid, name);
     };
 
-    // Tabs
     $("#tabTeam").onclick = async () => { setActiveTab("team"); await openGroup(GROUP_TEAM_ID, "Team Chat (All Players)"); };
     $("#tabAnn").onclick  = async () => { setActiveTab("ann");  await openGroup(GROUP_ANN_ID,  "Coach Announcements");     };
     $("#tabQna").onclick  = async () => { setActiveTab("qna");  await openGroup(GROUP_QNA_ID,  "Questions");                };
 
-    // DM + small groups
     $("#startDm").onclick = async () => {
       const uid = $("#dmUid").value.trim();
       if (!uid) return alert("Enter a UID to DM");
       await openDM(uid);
     };
+
     $("#makeSmallGroup").onclick = async () => {
       const list = $("#groupUids").value.trim();
       const name = $("#groupName").value.trim() || "Small Group";
@@ -246,7 +329,7 @@
       await openGroup(gid, name);
     };
 
-    // Optional PWA SW
+    // Optional PWA worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/service-worker.js');
     }
