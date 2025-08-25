@@ -14,8 +14,9 @@
   const REGION   = "us";                            // your CometChat Region
   const AUTH_KEY = "d20ca03513ab3c8c65c84f3429e7fd84a0deeb34"; // public Auth Key (NOT App Secret)
 
-  // IMPORTANT: absolute URL so Squarespace doesn't rewrite it
-  const SDK_SRC  = "https://college-team-chat-oehr.vercel.app/vendor/CometChat.js";
+  // use CometChat’s CDN (works immediately)
+const SDK_SRC = "https://unpkg.com/@cometchat-pro/chat/CometChat.js";
+
 
   // Group IDs (stable identifiers)
   const GROUPS = {
