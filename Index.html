@@ -1,0 +1,230 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2575.7">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 13.0px Courier; -webkit-text-stroke: #000000}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 13.0px Courier; -webkit-text-stroke: #000000; min-height: 16.0px}
+    span.s1 {font-kerning: none}
+  </style>
+</head>
+<body>
+<p class="p1"><span class="s1">&lt;!doctype html&gt;</span></p>
+<p class="p1"><span class="s1">&lt;html lang="en"&gt;</span></p>
+<p class="p1"><span class="s1">&lt;head&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;meta charset="utf-8" /&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;meta name="viewport" content="width=device-width,initial-scale=1" /&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;title&gt;College Team Chat&lt;/title&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;link rel="manifest" href="/manifest.webmanifest"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;meta name="theme-color" content="#b30000"&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;style&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>:root{--ink:#0b0b0c;--red:#b30000}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>*{box-sizing:border-box}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>header{position:sticky;top:0;background:#fff;border-bottom:1px solid #eee;z-index:10}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>.wrap{max-width:1100px;margin:0 auto;padding:14px}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>h1{margin:6px 0 10px;font-size:20px}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>.btn{padding:8px 12px;border:1px solid var(--ink);border-radius:8px;background:var(--ink);color:#fff;cursor:pointer}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>.btn.subtle{background:#fff;color:var(--ink)}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>.grid{display:grid;grid-template-columns:280px 1fr;gap:14px;padding:14px}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>@media (max-width:900px){.grid{grid-template-columns:1fr}}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>.panel{border:1px solid #eee;border-radius:12px;background:#fff}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>.panel h3{margin:0;padding:10px 12px;border-bottom:1px solid #eee;font-size:14px}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>.panel .body{padding:10px 12px}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>#chatMount{height:70vh;border:1px solid #eee;border-radius:12px;overflow:hidden}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>.field{display:flex;flex-direction:column;margin-bottom:10px}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>.field label{font-size:12px;color:#555;margin-bottom:6px}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>input,select{padding:10px;border:1px solid #ddd;border-radius:8px}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>.note{font-size:13px;color:#555}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>.pill{display:inline-block;padding:4px 8px;border:1px solid #ddd;border-radius:999px;font-size:12px;margin-right:6px}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;/style&gt;</span></p>
+<p class="p1"><span class="s1">&lt;/head&gt;</span></p>
+<p class="p1"><span class="s1">&lt;body&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;header&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="wrap"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;h1&gt;College Team Chat&lt;/h1&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="row"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;button class="btn" id="loginBtn"&gt;Log in&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;span id="whoami" class="pill"&gt;Not logged in&lt;/span&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;button id="openTeam" class="btn subtle"&gt;Open Team Chat&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;button id="openAnn" class="btn subtle"&gt;Open Announcements&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;p class="note"&gt;After login, you can open Team Chat (everyone) or Announcements (coach-only). Use the Directory to DM or create a small group.&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;/header&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;main class="wrap"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="grid"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;!-- LEFT: Directory / DM / Small Groups --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="panel"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;h3&gt;Directory &amp; Quick Actions&lt;/h3&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="body"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="field"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;label&gt;Login as (UID you created in CometChat, e.g., &lt;b&gt;p_john_smith&lt;/b&gt;)&lt;/label&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;input id="uidInput" placeholder="UID, e.g., p_john_smith" /&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="field"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;label&gt;Display name&lt;/label&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;input id="nameInput" placeholder="John Smith" /&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;button id="doLogin" class="btn"&gt;Log in now&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;hr/&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="field"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;label&gt;Start a DM (enter UID)&lt;/label&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;input id="dmUid" placeholder="e.g., p_mary_lee" /&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;button id="startDm" class="btn subtle"&gt;Open Direct Message&lt;/button&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;hr/&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="field"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;label&gt;Create a small group (comma-separated UIDs)&lt;/label&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;input id="groupUids" placeholder="p_mary_lee,p_john_smith" /&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="field"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;label&gt;Group name&lt;/label&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;input id="groupName" placeholder="Forwards" /&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;button id="makeSmallGroup" class="btn subtle"&gt;Create &amp; Open Group&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;!-- RIGHT: Chat Mount --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="panel"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;h3&gt;Chat&lt;/h3&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="body"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div id="chatMount"&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;/main&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;!-- CometChat Widget SDK --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;script src="https://widget-js.cometchat.io/v3/cometchatwidget.js"&gt;&lt;/script&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;script&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>// ===== CONFIG with your keys =====</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const CC_APP_ID<span class="Apple-converted-space">  </span>= "2808186f24275c0e";</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const CC_REGION<span class="Apple-converted-space">  </span>= "us";</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const CC_AUTHKEY = "d20ca03513ab3c8c65c84f3429e7fd84a0deeb34";</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const GROUP_TEAM_ID = "college-team-chat";</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const GROUP_ANN_ID<span class="Apple-converted-space">  </span>= "announcements";</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>let loggedInUID = null;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>async function ccInit(){</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>await CometChatWidget.init({ appID: CC_APP_ID, appRegion: CC_REGION });</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function setWho(s){ document.getElementById('whoami').textContent = s; }</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>async function ccLogin(uid, name){</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>try {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>await CometChatWidget.login({ uid, authToken: CC_AUTHKEY });</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>} catch {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>await CometChatWidget.createOrUpdateUser({ uid, name }, CC_AUTHKEY);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>await CometChatWidget.login({ uid, authToken: CC_AUTHKEY });</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>loggedInUID = uid;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>localStorage.setItem("ctc_uid", uid);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>localStorage.setItem("ctc_name", name);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>setWho("Logged in as: " + name + " (" + uid + ")");</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>async function ensureGroup(id, title, type="PUBLIC"){</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const CC = CometChatWidget.CometChat;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>try { await CC.getGroup(id); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>catch {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const g = new CC.Group(id, CC.GROUP_TYPE[type], title);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>await CC.createGroup(g);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>async function openGroup(id){</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>await CometChatWidget.launch({</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>widgetID: "default",</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>target: "#chatMount",</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>roundedCorners: "true",</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>height: "70vh",</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>width: "100%",</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>defaultID: id,</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>defaultType: "group"</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>});</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>async function openDM(uid){</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>await CometChatWidget.launch({</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>widgetID: "default",</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>target: "#chatMount",</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>roundedCorners: "true",</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>height: "70vh",</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>width: "100%",</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>defaultID: uid,</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>defaultType: "user"</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>});</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>// ===== UI wiring =====</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>(async () =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>await ccInit();</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>// autologin if saved</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const suid = localStorage.getItem("ctc_uid");</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const sname = localStorage.getItem("ctc_name");</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>if (suid &amp;&amp; sname) {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>await ccLogin(suid, sname);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>} else {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>setWho("Not logged in");</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>document.getElementById('doLogin').onclick = async () =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const uid = document.getElementById('uidInput').value.trim();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const name = document.getElementById('nameInput').value.trim();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if (!uid || !name) return alert("Enter UID and Name");</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>await ccLogin(uid, name);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>};</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>document.getElementById('openTeam').onclick = async () =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>await ensureGroup(GROUP_TEAM_ID, "Team Chat (All Players)");</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>await openGroup(GROUP_TEAM_ID);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>};</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>document.getElementById('openAnn').onclick = async () =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>await ensureGroup(GROUP_ANN_ID, "Coach Announcements");</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>await openGroup(GROUP_ANN_ID);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>};</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>document.getElementById('startDm').onclick = async () =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const uid = document.getElementById('dmUid').value.trim();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if (!uid) return alert("Enter a UID to DM");</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>await openDM(uid);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>};</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>document.getElementById('makeSmallGroup').onclick = async () =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const list = document.getElementById('groupUids').value.trim();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const name = document.getElementById('groupName').value.trim() || "Small Group";</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if (!list) return alert("Enter comma-separated UIDs");</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const ids = list.split(",").map(s =&gt; s.trim()).filter(Boolean);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const CC = CometChatWidget.CometChat;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const gid = "grp_" + name.toLowerCase().replace(/[^a-z0-9]+/g,'_').slice(0,30);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>await ensureGroup(gid, name);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const members = ids.map(uid =&gt; new CC.GroupMember(uid, CC.GROUP_MEMBER_SCOPE.PARTICIPANT));</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>try { await CC.addMembersToGroup(gid, members, []); } catch(e){}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>await openGroup(gid);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>};</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>})();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;/script&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;script&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/service-worker.js'); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;/script&gt;</span></p>
+<p class="p1"><span class="s1">&lt;/body&gt;</span></p>
+<p class="p1"><span class="s1">&lt;/html&gt;</span></p>
+</body>
+</html>
