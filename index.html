@@ -110,17 +110,20 @@
     function setWho(s){ document.getElementById('whoami').textContent = s; }
 
     async function ccLogin(uid, name){
-      try {
-        await CometChatWidget.login({ uid, authToken: CC_AUTHKEY });
-      } catch {
-        await CometChatWidget.createOrUpdateUser({ uid, name }, CC_AUTHKEY);
-        await CometChatWidget.login({ uid, authToken: CC_AUTHKEY });
-      }
-      loggedInUID = uid;
-      localStorage.setItem("ctc_uid", uid);
-      localStorage.setItem("ctc_name", name);
-      setWho("Logged in as: " + name + " (" + uid + ")");
-    }
+  try {
+    // ✅ Correct signature: (loginObject, authKey)
+    await CometChatWidget.login({ uid }, CC_AUTHKEY);
+  } catch (e) {
+    // Create user if it doesn’t exist, then login
+    await CometChatWidget.createOrUpdateUser({ uid, name }, CC_AUTHKEY);
+    await CometChatWidget.login({ uid }, CC_AUTHKEY);
+  }
+  loggedInUID = uid;
+  localStorage.setItem("ctc_uid", uid);
+  localStorage.setItem("ctc_name", name);
+  setWho("Logged in as: " + name + " (" + uid + ")");
+}
+
 
     async function ensureGroup(id, title, type="PUBLIC"){
       const CC = CometChatWidget.CometChat;
