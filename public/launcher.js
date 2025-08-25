@@ -2,29 +2,29 @@
    Coyotes Chat Launcher
    - Bottom-right bubble that opens a 3-tab chat (Team, Coach Announcements, Questions)
    - Persists login with localStorage
-   - Loads CometChat SDK from your own domain: /vendor/CometChat.js
+   - Loads CometChat SDK from your Vercel domain (absolute URL)
    - iMessage-like UI, black + red palette
    ======================================================================== */
 
 (() => {
   // -----------------------------
-  // 0) CONFIG — CHANGE THESE
+  // 0) CONFIG — CHANGE THESE IF NEEDED
   // -----------------------------
-  const APP_ID   = "2808186f24275c0e";             // <- your CometChat App ID
-  const REGION   = "us";                            // <- your CometChat Region (e.g., "us")
-  const AUTH_KEY = "d20ca03513ab3c8c65c84f3429e7fd84a0deeb34"; // <- your public Auth Key (NOT App Secret)
+  const APP_ID   = "2808186f24275c0e";             // your CometChat App ID
+  const REGION   = "us";                            // your CometChat Region
+  const AUTH_KEY = "d20ca03513ab3c8c65c84f3429e7fd84a0deeb34"; // public Auth Key (NOT App Secret)
 
-  // CometChat SDK source hosted on your Vercel app:
-  const SDK_SRC  = "/vendor/CometChat.js";
+  // IMPORTANT: absolute URL so Squarespace doesn't rewrite it
+  const SDK_SRC  = "https://college-team-chat-oehr.vercel.app/vendor/CometChat.js";
 
-  // Group IDs (stable identifiers). Rename if you want.
+  // Group IDs (stable identifiers)
   const GROUPS = {
     TEAM:          { guid: "team_chat",           name: "Team Chat",           type: "public"  },
     ANNOUNCEMENTS: { guid: "coach_announcements", name: "Coach Announcements", type: "public"  },
     QUESTIONS:     { guid: "questions",           name: "Questions",           type: "public"  },
   };
 
-  // If someone’s UID starts with this, we treat them as a coach (can post in announcements)
+  // Users whose UID starts with this are treated as coaches
   const COACH_UID_PREFIX = "coach_";
 
   // -----------------------------
@@ -67,7 +67,7 @@
   }
 
   async function createOrLogin(uid, name) {
-    // 1) Try to create (if exists, CometChat throws 400, which we can ignore)
+    // 1) Try to create (ignore error if already exists)
     const user = new CometChat.User(uid);
     user.setName(name);
     try { await CometChat.createUser(user, AUTH_KEY); } catch (_) {}
@@ -78,11 +78,10 @@
     return { uid, name };
   }
 
-  async function ensureGroup({guid, name, type}) {
+  async function ensureGroup({guid, name}) {
     try {
       await CometChat.getGroup(guid);
     } catch {
-      // Create if not exists (public group)
       const g = new CometChat.Group(guid, name, CometChat.GROUP_TYPE.PUBLIC);
       try { await CometChat.createGroup(g); } catch (_) {}
     }
@@ -206,7 +205,6 @@
     const root = ensureRoot();
     root.innerHTML = `
       <button class="coy-bubble" id="coyBubble" aria-label="Open chat">
-        <!-- chat icon -->
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V5a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v10Z" fill="white"/></svg>
         <span class="coy-badge" id="coyGlobalBadge" style="display:none">0</span>
       </button>
@@ -343,13 +341,11 @@
 
           if (!tabKey) return;
 
-          // if not on this tab or panel closed -> increment unread
           const panelOpen = document.getElementById("coyPanel")?.classList.contains("open");
           if (!(tabKey === activeTab && panelOpen)) {
             unread[tabKey] = (unread[tabKey] || 0) + 1;
             updateBadges();
           } else {
-            // viewing this tab — show immediately
             appendMessage(m, m.sender?.uid === loggedUser?.uid);
           }
         }
@@ -407,7 +403,6 @@
   // 6) After login: ensure groups & listeners
   // -----------------------------
   async function postLoginSetup() {
-    // Make sure our 3 groups exist (no-op if they already exist)
     await Promise.all([
       ensureGroup(GROUPS.TEAM),
       ensureGroup(GROUPS.ANNOUNCEMENTS),
@@ -419,7 +414,6 @@
       try { await CometChat.joinGroup(g.guid, CometChat.GROUP_TYPE.PUBLIC, ""); } catch {}
     }
 
-    // Start listener & load default tab
     addLiveListener();
     setActiveTab(activeTab);
   }
@@ -443,7 +437,7 @@
         showLogin(false);
         await postLoginSetup();
       } catch {
-        showLogin(true); // token expired or similar
+        showLogin(true);
       }
     }
   }
@@ -454,7 +448,6 @@
     .then(boot)
     .catch((e) => {
       console.error(e);
-      // If SDK fails to load, keep the bubble but make it say "offline"
       const root = ensureRoot();
       root.innerHTML = `<div style="position:fixed;right:18px;bottom:18px;background:#222;color:#fff;padding:10px 14px;border-radius:12px;border:1px solid #444;">Chat unavailable</div>`;
     });
