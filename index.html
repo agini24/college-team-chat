@@ -15,9 +15,10 @@
     header{position:sticky;top:0;background:#fff;border-bottom:1px solid #eee;z-index:10}
     .wrap{max-width:1100px;margin:0 auto;padding:14px}
     h1{margin:6px 0 10px;font-size:20px}
-    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-    .btn{padding:8px 12px;border:1px solid var(--ink);border-radius:8px;background:var(--ink);color:#fff;cursor:pointer}
-    .btn.subtle{background:#fff;color:#111}
+    .tabs{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .tab{padding:8px 12px;border:1px solid #ddd;border-radius:999px;background:#fff;cursor:pointer}
+    .tab.active{border-color:var(--red);color:#fff;background:var(--red)}
+    .pill{margin-left:auto;display:inline-block;padding:4px 8px;border:1px solid #ddd;border-radius:999px;font-size:12px}
     .grid{display:grid;grid-template-columns:280px 1fr;gap:14px;padding:14px}
     @media (max-width:900px){.grid{grid-template-columns:1fr}}
     .panel{border:1px solid #eee;border-radius:12px;background:#fff}
@@ -27,32 +28,37 @@
     .field{display:flex;flex-direction:column;margin-bottom:10px}
     .field label{font-size:12px;color:#555;margin-bottom:6px}
     input{padding:10px;border:1px solid #ddd;border-radius:8px}
+    .btn{padding:10px 12px;border:1px solid var(--ink);border-radius:8px;background:var(--ink);color:#fff;cursor:pointer}
+    .btn.ghost{background:#fff;color:var(--ink)}
     .note{font-size:13px;color:#555}
-    .pill{display:inline-block;padding:4px 8px;border:1px solid #ddd;border-radius:999px;font-size:12px;margin-right:6px}
   </style>
 </head>
 <body>
   <header>
     <div class="wrap">
       <h1>College Team Chat</h1>
-      <div class="row">
-        <button class="btn" id="loginBtn">Log in</button>
+
+      <!-- TABS -->
+      <div class="tabs" id="tabs">
+        <button class="tab active" id="tabTeam">Team Chat</button>
+        <button class="tab" id="tabAnn">Coach Announcements</button>
+        <button class="tab" id="tabQna">Questions</button>
         <span id="whoami" class="pill">Not logged in</span>
-        <button id="openTeam" class="btn subtle">Open Team Chat</button>
-        <button id="openAnn" class="btn subtle">Open Announcements</button>
       </div>
-      <p class="note">After login, open Team Chat (everyone) or Announcements (coach-only). Use the Directory to DM or create a small group.</p>
+
+      <p class="note">Log in below. Then use the tabs to switch between the three rooms. DM and small groups are on the left.</p>
     </div>
   </header>
 
   <main class="wrap">
     <div class="grid">
+      <!-- LEFT: Login / DM / Small groups -->
       <div class="panel">
-        <h3>Directory & Quick Actions</h3>
+        <h3>Login & Quick Actions</h3>
         <div class="body">
           <div class="field">
-            <label>Login as (UID you created in CometChat, e.g., <b>p_john_smith</b>)</label>
-            <input id="uidInput" placeholder="UID, e.g., p_john_smith" />
+            <label>UID (your CometChat user id, e.g. <b>p_john</b> or <b>coach_andrew</b>)</label>
+            <input id="uidInput" placeholder="e.g., p_john" />
           </div>
           <div class="field">
             <label>Display name</label>
@@ -62,24 +68,25 @@
           <hr/>
 
           <div class="field">
-            <label>Start a DM (enter UID)</label>
-            <input id="dmUid" placeholder="e.g., p_mary_lee" />
+            <label>Start a direct message (enter UID)</label>
+            <input id="dmUid" placeholder="e.g., p_mary" />
           </div>
-          <button id="startDm" class="btn subtle">Open Direct Message</button>
+          <button id="startDm" class="btn ghost">Open Direct Message</button>
 
           <hr/>
           <div class="field">
             <label>Create a small group (comma-separated UIDs)</label>
-            <input id="groupUids" placeholder="p_mary_lee,p_john_smith" />
+            <input id="groupUids" placeholder="p_mary,p_john,p_ali" />
           </div>
           <div class="field">
             <label>Group name</label>
             <input id="groupName" placeholder="Forwards" />
           </div>
-          <button id="makeSmallGroup" class="btn subtle">Create & Open Group</button>
+          <button id="makeSmallGroup" class="btn ghost">Create & Open Group</button>
         </div>
       </div>
 
+      <!-- RIGHT: Chat pane -->
       <div class="panel">
         <h3>Chat</h3>
         <div class="body">
@@ -92,60 +99,46 @@
   <!-- CometChat Widget SDK -->
   <script src="https://widget-js.cometchat.io/v3/cometchatwidget.js"></script>
   <script>
-    // ===== YOUR CREDENTIALS =====
+    /*************** CONFIG ***************/
     const CC_APP_ID  = "2808186f24275c0e";
     const CC_REGION  = "us";
     const CC_AUTHKEY = "d20ca03513ab3c8c65c84f3429e7fd84a0deeb34";
 
-    const GROUP_TEAM_ID = "college-team-chat";
+    // Group IDs
+    const GROUP_TEAM_ID = "team_chat";
     const GROUP_ANN_ID  = "announcements";
+    const GROUP_QNA_ID  = "questions";
 
+    // Coach accounts (composer stays enabled in Announcements for these UIDs)
+    const COACH_UIDS = ["coach_andrew"]; // <— add more coach UIDs here
+
+    /*************** STATE ***************/
     let loggedInUID = null;
     let widgetReady = false;
+    let activeTab = "team"; // team | ann | qna
 
-    function setWho(s){ document.getElementById('whoami').textContent = s; }
+    /*************** HELPERS ***************/
+    const $ = sel => document.querySelector(sel);
+    function isCoach(uid){ return COACH_UIDS.includes(uid); }
+    function setWho(s){ $("#whoami").textContent = s; }
+    function setActiveTab(which){
+      activeTab = which;
+      $("#tabTeam").classList.toggle("active", which==="team");
+      $("#tabAnn").classList.toggle("active", which==="ann");
+      $("#tabQna").classList.toggle("active", which==="qna");
+    }
 
-    // Init WITH authKey (important)
-    (async () => {
-      try {
-        await CometChatWidget.init({
-          appID: CC_APP_ID,
-          appRegion: CC_REGION,
-          authKey: CC_AUTHKEY    // ✅ provide here so widget has it
-        });
-        console.log("CometChat Widget: initialised successfully");
-        widgetReady = true;
-
-        // autologin if saved
-        const suid = localStorage.getItem("ctc_uid");
-        const sname = localStorage.getItem("ctc_name");
-        if (suid && sname) { await ccLogin(suid, sname); }
-      } catch (e) {
-        console.error("CometChat init failed", e);
-        alert("Chat failed to initialise. Refresh the page and try again.");
-      }
-    })();
-
-    // Correct login flow (no authKey param here since it's set at init)
-    async function ccLogin(uid, name){
-      if (!widgetReady) { alert("Chat not ready yet. Try again in a second."); return; }
-      try {
-        await CometChatWidget.login({ uid });
-      } catch (e) {
-        // If user doesn't exist, create then login
-        try {
-          await CometChatWidget.createOrUpdateUser({ uid, name }, CC_AUTHKEY);
-          await CometChatWidget.login({ uid });
-        } catch (err) {
-          console.error("Login failed", err);
-          alert("Login failed. Double-check UID and try again.");
-          return;
+    // Hide message composer inside widget (for read-only experience)
+    function hideComposerIfNeeded(){
+      if (activeTab !== "ann" || isCoach(loggedInUID)) return;
+      const attempt = () => {
+        const composer = document.querySelector('#chatMount [class*="Composer"], #chatMount textarea, #chatMount [role="textbox"]');
+        if (composer && composer.closest) {
+          const container = composer.closest("div");
+          if (container) container.style.display = "none";
         }
-      }
-      loggedInUID = uid;
-      localStorage.setItem("ctc_uid", uid);
-      localStorage.setItem("ctc_name", name);
-      setWho("Logged in as: " + name + " (" + uid + ")");
+      };
+      attempt(); setTimeout(attempt, 300); setTimeout(attempt, 1000);
     }
 
     async function ensureGroup(id, title, type="PUBLIC"){
@@ -157,7 +150,8 @@
       }
     }
 
-    async function openGroup(id){
+    async function openGroup(id, title){
+      await ensureGroup(id, title);
       await CometChatWidget.launch({
         widgetID: "default",
         target: "#chatMount",
@@ -167,6 +161,7 @@
         defaultID: id,
         defaultType: "group"
       });
+      hideComposerIfNeeded();
     }
 
     async function openDM(uid){
@@ -181,44 +176,77 @@
       });
     }
 
-    // ===== UI wiring =====
-    document.getElementById('doLogin').onclick = async () => {
-      const uid = document.getElementById('uidInput').value.trim();
-      const name = document.getElementById('nameInput').value.trim();
+    /*************** INIT + LOGIN ***************/
+    (async () => {
+      try {
+        // include authKey here so the widget can use it internally
+        await CometChatWidget.init({ appID: CC_APP_ID, appRegion: CC_REGION, authKey: CC_AUTHKEY });
+        console.log("CometChat Widget: initialised successfully");
+        widgetReady = true;
+
+        const suid = localStorage.getItem("ctc_uid");
+        const sname = localStorage.getItem("ctc_name");
+        if (suid && sname) { await ccLogin(suid, sname); }
+      } catch (e) {
+        console.error("CometChat init failed", e);
+        alert("Chat failed to initialise. Refresh and try again.");
+      }
+    })();
+
+    async function ccLogin(uid, name){
+      if (!widgetReady) { alert("Chat not ready yet. Try again in a second."); return; }
+      try {
+        await CometChatWidget.login({ uid });
+      } catch (e) {
+        // If user doesn't exist yet, create then login
+        await CometChatWidget.createOrUpdateUser({ uid, name }, CC_AUTHKEY);
+        await CometChatWidget.login({ uid });
+      }
+      loggedInUID = uid;
+      localStorage.setItem("ctc_uid", uid);
+      localStorage.setItem("ctc_name", name);
+      setWho("Logged in as: " + name + " (" + uid + ")");
+
+      // Open the active tab after login
+      if (activeTab === "ann") openGroup(GROUP_ANN_ID, "Coach Announcements");
+      else if (activeTab === "qna") openGroup(GROUP_QNA_ID, "Questions");
+      else openGroup(GROUP_TEAM_ID, "Team Chat (All Players)");
+    }
+
+    /*************** UI EVENTS ***************/
+    // Login
+    $("#doLogin").onclick = async () => {
+      const uid = $("#uidInput").value.trim();
+      const name = $("#nameInput").value.trim();
       if (!uid || !name) return alert("Enter UID and Name");
       await ccLogin(uid, name);
     };
 
-    document.getElementById('openTeam').onclick = async () => {
-      await ensureGroup(GROUP_TEAM_ID, "Team Chat (All Players)");
-      await openGroup(GROUP_TEAM_ID);
-    };
+    // Tabs
+    $("#tabTeam").onclick = async () => { setActiveTab("team"); await openGroup(GROUP_TEAM_ID, "Team Chat (All Players)"); };
+    $("#tabAnn").onclick  = async () => { setActiveTab("ann");  await openGroup(GROUP_ANN_ID,  "Coach Announcements");     };
+    $("#tabQna").onclick  = async () => { setActiveTab("qna");  await openGroup(GROUP_QNA_ID,  "Questions");                };
 
-    document.getElementById('openAnn').onclick = async () => {
-      await ensureGroup(GROUP_ANN_ID, "Coach Announcements");
-      await openGroup(GROUP_ANN_ID);
-    };
-
-    document.getElementById('startDm').onclick = async () => {
-      const uid = document.getElementById('dmUid').value.trim();
+    // DM + small groups
+    $("#startDm").onclick = async () => {
+      const uid = $("#dmUid").value.trim();
       if (!uid) return alert("Enter a UID to DM");
       await openDM(uid);
     };
-
-    document.getElementById('makeSmallGroup').onclick = async () => {
-      const list = document.getElementById('groupUids').value.trim();
-      const name = document.getElementById('groupName').value.trim() || "Small Group";
+    $("#makeSmallGroup").onclick = async () => {
+      const list = $("#groupUids").value.trim();
+      const name = $("#groupName").value.trim() || "Small Group";
       if (!list) return alert("Enter comma-separated UIDs");
       const ids = list.split(",").map(s => s.trim()).filter(Boolean);
       const CC = CometChatWidget.CometChat;
       const gid = "grp_" + name.toLowerCase().replace(/[^a-z0-9]+/g,'_').slice(0,30);
       await ensureGroup(gid, name);
-      const members = ids.map(uid => new CC.GroupMember(uid, CC.GROUP_MEMBER_SCOPE.PARTICIPANT));
+      const members = ids.map(u => new CC.GroupMember(u, CC.GROUP_MEMBER_SCOPE.PARTICIPANT));
       try { await CC.addMembersToGroup(gid, members, []); } catch(e){}
-      await openGroup(gid);
+      await openGroup(gid, name);
     };
 
-    // Optional PWA worker
+    // Optional PWA SW
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/service-worker.js');
     }
