@@ -17,7 +17,7 @@
     h1{margin:6px 0 10px;font-size:20px}
     .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
     .btn{padding:8px 12px;border:1px solid var(--ink);border-radius:8px;background:var(--ink);color:#fff;cursor:pointer}
-    .btn.subtle{background:#fff;color:var(--ink)}
+    .btn.subtle{background:#fff;color:#111}
     .grid{display:grid;grid-template-columns:280px 1fr;gap:14px;padding:14px}
     @media (max-width:900px){.grid{grid-template-columns:1fr}}
     .panel{border:1px solid #eee;border-radius:12px;background:#fff}
@@ -47,7 +47,6 @@
 
   <main class="wrap">
     <div class="grid">
-      <!-- LEFT: Directory / DM / Small Groups -->
       <div class="panel">
         <h3>Directory & Quick Actions</h3>
         <div class="body">
@@ -81,7 +80,6 @@
         </div>
       </div>
 
-      <!-- RIGHT: Chat Mount -->
       <div class="panel">
         <h3>Chat</h3>
         <div class="body">
@@ -99,38 +97,50 @@
     const CC_REGION  = "us";
     const CC_AUTHKEY = "d20ca03513ab3c8c65c84f3429e7fd84a0deeb34";
 
-    // Default groups
     const GROUP_TEAM_ID = "college-team-chat";
     const GROUP_ANN_ID  = "announcements";
 
     let loggedInUID = null;
     let widgetReady = false;
 
-    // Init widget
+    function setWho(s){ document.getElementById('whoami').textContent = s; }
+
+    // Init WITH authKey (important)
     (async () => {
       try {
-        await CometChatWidget.init({ appID: CC_APP_ID, appRegion: CC_REGION });
+        await CometChatWidget.init({
+          appID: CC_APP_ID,
+          appRegion: CC_REGION,
+          authKey: CC_AUTHKEY    // ✅ provide here so widget has it
+        });
+        console.log("CometChat Widget: initialised successfully");
         widgetReady = true;
+
         // autologin if saved
         const suid = localStorage.getItem("ctc_uid");
         const sname = localStorage.getItem("ctc_name");
         if (suid && sname) { await ccLogin(suid, sname); }
       } catch (e) {
         console.error("CometChat init failed", e);
+        alert("Chat failed to initialise. Refresh the page and try again.");
       }
     })();
 
-    function setWho(s){ document.getElementById('whoami').textContent = s; }
-
-    // ✅ FIXED login: pass (object, authKey)
+    // Correct login flow (no authKey param here since it's set at init)
     async function ccLogin(uid, name){
       if (!widgetReady) { alert("Chat not ready yet. Try again in a second."); return; }
       try {
-        await CometChatWidget.login({ uid }, CC_AUTHKEY);
+        await CometChatWidget.login({ uid });
       } catch (e) {
-        // If user doesn't exist yet, create then login
-        await CometChatWidget.createOrUpdateUser({ uid, name }, CC_AUTHKEY);
-        await CometChatWidget.login({ uid }, CC_AUTHKEY);
+        // If user doesn't exist, create then login
+        try {
+          await CometChatWidget.createOrUpdateUser({ uid, name }, CC_AUTHKEY);
+          await CometChatWidget.login({ uid });
+        } catch (err) {
+          console.error("Login failed", err);
+          alert("Login failed. Double-check UID and try again.");
+          return;
+        }
       }
       loggedInUID = uid;
       localStorage.setItem("ctc_uid", uid);
@@ -208,7 +218,7 @@
       await openGroup(gid);
     };
 
-    // PWA service worker (optional)
+    // Optional PWA worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/service-worker.js');
     }
