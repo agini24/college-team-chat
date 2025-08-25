@@ -4,174 +4,53 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>College Team Chat</title>
-
-  <link rel="manifest" href="/manifest.webmanifest">
   <meta name="theme-color" content="#D10F2F">
 
   <style>
-    /* ------- Luxe Black/Red iMessage-inspired shell ------- */
-    :root{
-      --bg:#0A0A0B;
-      --surface:#111214;
-      --elev:#16181B;
-      --ink:#EDEEF0;
-      --muted:#A1A5AD;
-      --line:#23262B;
-      --accent:#D10F2F;
-      --accent-ink:#fff;
-      --radius:18px;
-      --shadow:0 16px 48px rgba(0,0,0,.35);
-      --font: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-              "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;background:radial-gradient(1200px 800px at 70% -10%,#111214 0%,#0A0A0B 60%,#070708 100%);
-      color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased;letter-spacing:.2px;
-    }
-
-    /* Header */
-    header{
-      position:sticky;top:0;z-index:20;
-      background:linear-gradient(180deg, rgba(10,10,11,.8), rgba(10,10,11,.55));
-      backdrop-filter: blur(10px) saturate(1.25);
-      border-bottom:1px solid var(--line);
-    }
-    .wrap{max-width:1200px;margin:0 auto;padding:14px 18px}
-    h1{margin:2px 0 10px;font-size:20px;font-weight:700;letter-spacing:.3px}
-
-    /* Segmented tabs */
-    .seg{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-    .seg-box{
-      display:inline-flex;gap:6px;padding:6px;
-      background:#0E0F11;border:1px solid var(--line);
-      border-radius:999px;box-shadow:var(--shadow);
-    }
-    .seg button{
-      appearance:none;border:0;cursor:pointer;
-      padding:9px 16px;border-radius:999px;font-weight:700;
-      color:var(--muted);background:transparent;transition:.15s ease;
-    }
-    .seg button.active{
-      background:linear-gradient(180deg, #E01538, #C70D2C);
-      color:var(--accent-ink);box-shadow:0 10px 30px rgba(209,15,47,.35);
-    }
-    .pill{
-      margin-left:auto;display:inline-flex;align-items:center;
-      gap:8px;padding:7px 12px;border:1px solid var(--line);
-      border-radius:999px;font-size:12px;color:var(--muted);
-      background:linear-gradient(180deg,#0F1012,#0C0D0F);
-    }
-
-    /* Layout */
-    main{padding:18px}
-    .grid{
-      max-width:1200px;margin:0 auto;
-      display:grid;grid-template-columns:360px 1fr;gap:18px;
-    }
-    @media (max-width:1080px){.grid{grid-template-columns:1fr}}
-    .panel{
-      border:1px solid var(--line);border-radius:var(--radius);
-      background:linear-gradient(180deg,#111214,#0E0F11);box-shadow:var(--shadow);
-    }
-    .panel h3{
-      margin:0;padding:14px 16px;border-bottom:1px solid var(--line);
-      font-size:13px;color:var(--muted);font-weight:800;letter-spacing:.35px;text-transform:uppercase;
-    }
-    .panel .body{padding:14px 16px}
-
-    /* Fields & buttons */
-    .field{display:flex;flex-direction:column;margin-bottom:12px}
-    .field label{font-size:12px;color:var(--muted);margin-bottom:6px}
-    input{
-      padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#0B0C0E;color:var(--ink);
-      outline:none;transition:border-color .15s ease, box-shadow .15s ease;
-    }
-    input::placeholder{color:#7C818A}
-    input:focus{border-color:#2B2E34;box-shadow:0 0 0 3px rgba(209,15,47,.25)}
-
-    .btn{
-      padding:12px 14px;border-radius:14px;border:1px solid #8E0C21;
-      background:linear-gradient(180deg, #E01538, #C70D2C);color:#fff;font-weight:800;cursor:pointer;
-      box-shadow:0 12px 28px rgba(209,15,47,.35);transition:transform .04s ease, filter .15s ease;
-    }
-    .btn:active{transform:translateY(1px)}
-    .btn.ghost{
-      background:#0B0C0E;color:var(--ink);border-color:var(--line);
-      box-shadow:none;
-    }
-    .btn.ghost:hover{filter:brightness(1.08)}
-
-    /* Chat mount */
-    #chatMount{
-      height:76vh;min-height:520px;border:1px solid var(--line);
-      border-radius:16px;overflow:hidden;background:#0B0C0E;
-    }
-    @media (min-height:900px){#chatMount{height:80vh}}
-
-    .rule{border:none;border-top:1px solid var(--line);margin:16px 0}
+    body{margin:0;background:#0A0A0B;color:#fff;font-family:sans-serif}
+    header{padding:10px 20px;background:#111214;color:#fff;display:flex;align-items:center;justify-content:space-between}
+    h1{font-size:20px;margin:0}
+    .tabs{display:flex;gap:10px}
+    .tabs button{padding:8px 16px;border-radius:20px;border:none;background:#222;color:#bbb;cursor:pointer}
+    .tabs button.active{background:#D10F2F;color:#fff}
+    .pill{font-size:12px;color:#aaa}
+    main{display:flex;gap:20px;padding:20px}
+    .panel{background:#111214;padding:15px;border-radius:10px;flex:1}
+    .field{margin-bottom:10px}
+    label{display:block;font-size:12px;color:#aaa;margin-bottom:3px}
+    input{width:100%;padding:8px;border-radius:6px;border:1px solid #333;background:#0B0C0E;color:#fff}
+    button{padding:10px;border-radius:6px;border:none;background:#D10F2F;color:#fff;cursor:pointer}
+    #chatMount{height:70vh;min-height:400px;border:1px solid #333;border-radius:10px;overflow:hidden}
   </style>
 </head>
 <body>
   <header>
-    <div class="wrap">
-      <h1>College Team Chat</h1>
-
-      <div class="seg" id="tabs">
-        <div class="seg-box">
-          <button class="active" id="tabTeam">Team Chat</button>
-          <button id="tabAnn">Coach Announcements</button>
-          <button id="tabQna">Questions</button>
-        </div>
-        <span id="whoami" class="pill">Not logged in</span>
-      </div>
+    <h1>College Team Chat</h1>
+    <div class="tabs">
+      <button id="tabTeam" class="active">Team Chat</button>
+      <button id="tabAnn">Coach Announcements</button>
+      <button id="tabQna">Questions</button>
     </div>
+    <span id="whoami" class="pill">Not logged in</span>
   </header>
 
   <main>
-    <div class="grid">
-      <div class="panel">
-        <h3>Login & Quick Actions</h3>
-        <div class="body">
-          <div class="field">
-            <label>UID</label>
-            <input id="uidInput" placeholder="e.g., p_john" />
-          </div>
-          <div class="field">
-            <label>Display name</label>
-            <input id="nameInput" placeholder="John Smith" />
-          </div>
-          <button id="doLogin" class="btn">Log in now</button>
-
-          <hr class="rule"/>
-
-          <div class="field">
-            <label>Direct message (enter UID)</label>
-            <input id="dmUid" placeholder="e.g., p_mary" />
-          </div>
-          <button id="startDm" class="btn ghost">Open Direct Message</button>
-
-          <hr class="rule"/>
-
-          <div class="field">
-            <label>Create a small group (comma-separated UIDs)</label>
-            <input id="groupUids" placeholder="p_mary,p_john" />
-          </div>
-          <div class="field">
-            <label>Group name</label>
-            <input id="groupName" placeholder="Forwards" />
-          </div>
-          <button id="makeSmallGroup" class="btn ghost">Create & Open Group</button>
-        </div>
+    <div class="panel" style="max-width:300px">
+      <h3>Login</h3>
+      <div class="field">
+        <label>UID (e.g., p_john)</label>
+        <input id="uidInput" />
       </div>
-
-      <div class="panel">
-        <h3>Chat</h3>
-        <div class="body">
-          <div id="chatMount"></div>
-        </div>
+      <div class="field">
+        <label>Display name</label>
+        <input id="nameInput" />
       </div>
+      <button id="doLogin">Log in now</button>
+    </div>
+
+    <div class="panel" style="flex:2">
+      <h3>Chat</h3>
+      <div id="chatMount"></div>
     </div>
   </main>
 
@@ -182,113 +61,56 @@
     const CC_REGION  = "us";
     const CC_AUTHKEY = "d20ca03513ab3c8c65c84f3429e7fd84a0deeb34";
 
-    const GROUP_TEAM_ID = "team_chat";
-    const GROUP_ANN_ID  = "announcements";
-    const GROUP_QNA_ID  = "questions";
+    const GROUP_TEAM = {id:"team_chat", name:"Team Chat"};
+    const GROUP_ANN  = {id:"announcements", name:"Coach Announcements"};
+    const GROUP_QNA  = {id:"questions", name:"Questions"};
 
-    let loggedInUID = null;
-    let widgetReady = false;
-    let activeTab = "team";
+    let activeGroup = GROUP_TEAM;
 
     const $ = s => document.querySelector(s);
-    function setWho(s){ $("#whoami").textContent = s; }
-    function setActiveTab(which){
-      activeTab = which;
-      $("#tabTeam").classList.toggle("active", which==="team");
-      $("#tabAnn").classList.toggle("active", which==="ann");
-      $("#tabQna").classList.toggle("active", which==="qna");
+
+    function setActiveTab(tab){
+      $("#tabTeam").classList.toggle("active", tab==="team");
+      $("#tabAnn").classList.toggle("active", tab==="ann");
+      $("#tabQna").classList.toggle("active", tab==="qna");
     }
 
-    async function ensureGroup(id, title){
+    async function openGroup(group){
       const CC = CometChatWidget.CometChat;
-      try { await CC.getGroup(id); }
-      catch {
-        const g = new CC.Group(id, CC.GROUP_TYPE.PUBLIC, title);
-        await CC.createGroup(g);
-      }
-    }
-
-    async function openGroup(id, title){
-      const CC = CometChatWidget.CometChat;
-      await ensureGroup(id, title);
-      try { await CC.joinGroup(id, CC.GROUP_TYPE.PUBLIC, ""); } catch(e){}
+      try { await CC.getGroup(group.id); }
+      catch { await CC.createGroup(new CC.Group(group.id, CC.GROUP_TYPE.PUBLIC, group.name)); }
+      try { await CC.joinGroup(group.id, CC.GROUP_TYPE.PUBLIC, ""); } catch(e){}
       await CometChatWidget.launch({
-        widgetID: "default",
-        target: "#chatMount",
-        roundedCorners: "true",
-        height: "100%",
-        width: "100%",
-        defaultID: id,
-        defaultType: "group"
-      });
-    }
-
-    async function openDM(uid){
-      await CometChatWidget.launch({
-        widgetID: "default",
-        target: "#chatMount",
-        roundedCorners: "true",
-        height: "100%",
-        width: "100%",
-        defaultID: uid,
-        defaultType: "user"
+        widgetID:"default",
+        target:"#chatMount",
+        roundedCorners:"true",
+        height:"100%",
+        width:"100%",
+        defaultID:group.id,
+        defaultType:"group"
       });
     }
 
     (async () => {
-      try {
-        await CometChatWidget.init({ appID: CC_APP_ID, appRegion: CC_REGION, authKey: CC_AUTHKEY });
-        widgetReady = true;
-      } catch (e) {
-        console.error("CometChat init failed", e);
-        alert("Chat failed to initialise. Refresh and try again.");
-      }
+      await CometChatWidget.init({ appID:CC_APP_ID, appRegion:CC_REGION, authKey:CC_AUTHKEY });
     })();
-
-    async function ccLogin(uid, name){
-      if (!widgetReady) { alert("Chat not ready yet."); return; }
-      try {
-        await CometChatWidget.login({ uid });
-      } catch (e) {
-        await CometChatWidget.createOrUpdateUser({ uid, name }, CC_AUTHKEY);
-        await CometChatWidget.login({ uid });
-      }
-      loggedInUID = uid;
-      setWho("Logged in as: " + name + " (" + uid + ")");
-      if (activeTab === "ann") openGroup(GROUP_ANN_ID, "Coach Announcements");
-      else if (activeTab === "qna") openGroup(GROUP_QNA_ID, "Questions");
-      else openGroup(GROUP_TEAM_ID, "Team Chat");
-    }
 
     $("#doLogin").onclick = async () => {
       const uid = $("#uidInput").value.trim();
       const name = $("#nameInput").value.trim();
-      if (!uid || !name) return alert("Enter UID and Name");
-      await ccLogin(uid, name);
+      if(!uid||!name) return alert("Enter UID and Name");
+      try{ await CometChatWidget.login({uid}); }
+      catch{ 
+        await CometChatWidget.createOrUpdateUser({uid,name},CC_AUTHKEY);
+        await CometChatWidget.login({uid}); 
+      }
+      $("#whoami").textContent = `Logged in as ${name} (${uid})`;
+      openGroup(GROUP_TEAM);
     };
 
-    $("#tabTeam").onclick = async () => { setActiveTab("team"); await openGroup(GROUP_TEAM_ID, "Team Chat"); };
-    $("#tabAnn").onclick  = async () => { setActiveTab("ann");  await openGroup(GROUP_ANN_ID,  "Coach Announcements"); };
-    $("#tabQna").onclick  = async () => { setActiveTab("qna");  await openGroup(GROUP_QNA_ID,  "Questions"); };
-
-    $("#startDm").onclick = async () => {
-      const uid = $("#dmUid").value.trim();
-      if (!uid) return alert("Enter a UID to DM");
-      await openDM(uid);
-    };
-
-    $("#makeSmallGroup").onclick = async () => {
-      const list = $("#groupUids").value.trim();
-      const name = $("#groupName").value.trim() || "Small Group";
-      if (!list) return alert("Enter comma-separated UIDs");
-      const ids = list.split(",").map(s => s.trim()).filter(Boolean);
-      const CC = CometChatWidget.CometChat;
-      const gid = "grp_" + name.toLowerCase().replace(/[^a-z0-9]+/g,'_').slice(0,30);
-      await ensureGroup(gid, name);
-      const members = ids.map(u => new CC.GroupMember(u, CC.GROUP_MEMBER_SCOPE.PARTICIPANT));
-      try { await CC.addMembersToGroup(gid, members, []); } catch(e){}
-      await openGroup(gid, name);
-    };
+    $("#tabTeam").onclick = () => {setActiveTab("team"); openGroup(GROUP_TEAM);};
+    $("#tabAnn").onclick  = () => {setActiveTab("ann"); openGroup(GROUP_ANN);};
+    $("#tabQna").onclick  = () => {setActiveTab("qna"); openGroup(GROUP_QNA);};
   </script>
 </body>
 </html>
