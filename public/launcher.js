@@ -10,7 +10,7 @@
   const REGION = "us";
 
   // 🔗 use your Vercel URL (no trailing slash)
-  const AUTH_ENDPOINT = "https://college-team-chat-oehr.vercel.app/api/auth-login";
+  const AUTH_ENDPOINT = "https://college-team-chat.vercel.app/api/auth-login";
 
   // Groups
   const GROUPS = {
