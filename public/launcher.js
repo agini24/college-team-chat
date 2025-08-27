@@ -9,6 +9,9 @@
   const APP_ID = "2808186f24275c0e";
   const REGION = "us";
 
+  // 🔗 use your Vercel URL (no trailing slash)
+  const AUTH_ENDPOINT = "https://college-team-chat-oehr.vercel.app/api/auth-login";
+
   // Groups
   const GROUPS = {
     TEAM:          { guid: "team_chat",           name: "Team Chat" },
@@ -163,7 +166,7 @@
     const pass = document.getElementById("loginPass").value.trim();
     if (!user || !pass) return alert("Enter username and password");
 
-    const r = await fetch("/api/auth-login", {
+    const r = await fetch(AUTH_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type":"application/json" },
       body: JSON.stringify({ username: user, password: pass })
@@ -309,7 +312,6 @@
     const u = getUser();
     if (u) {
       try {
-        // Try to resume with an auth token? (CometChat tokens are short-lived; so we re-login on each page view by re-entering credentials when needed)
         document.getElementById("coyLogin").style.display = "none";
         document.getElementById("coyInput").style.display = "flex";
         loggedUser = u;
@@ -326,7 +328,4 @@
     const r = document.getElementById(ROOT_ID) || document.body;
     const warn = document.createElement("div");
     warn.style = "position:fixed;right:18px;bottom:80px;background:#222;color:#fff;padding:10px 14px;border-radius:12px;border:1px solid #444;z-index:999999";
-    warn.textContent = "Chat unavailable";
-    r.appendChild(warn);
-  });
-})();
+    warn.textContent = "
