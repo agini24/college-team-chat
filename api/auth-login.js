@@ -17,7 +17,7 @@ function setCors(res, origin = "") {
   res.setHeader("Vary", "Origin");
 }
 
-// ----- tiny helper to parse JSON body -----
+// read JSON body for Node serverless fn
 function readJSON(req) {
   return new Promise((resolve) => {
     let data = "";
@@ -29,11 +29,11 @@ function readJSON(req) {
   });
 }
 
-// ----- main handler -----
-export default async function handler(req, res) {
+// *** CommonJS export for Vercel Serverless Function in a static project ***
+module.exports = async (req, res) => {
   setCors(res, req.headers.origin || "");
 
-  if (req.method === "OPTIONS") return res.status(204).end(); // CORS preflight
+  if (req.method === "OPTIONS") return res.status(204).end();
 
   if (req.method === "GET") {
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
@@ -52,20 +52,20 @@ export default async function handler(req, res) {
     }
 
     // 1) Validate against roster in env
-    // TEAM_CREDENTIALS must be JSON: [ { "username":"Full Name", "password":"abc123" }, ... ]
+    // TEAM_CREDENTIALS: JSON like [{ "username":"Full Name", "password":"abc123" }, ...]
     const roster = JSON.parse(process.env.TEAM_CREDENTIALS || "[]");
     const row = roster.find(r => r.username === username && r.password === password);
     if (!row) return res.status(401).json({ error: "invalid_login" });
 
-    const uid = username;       // use full name as CometChat UID
-    const name = row.username;  // display name
+    const uid = username;
+    const name = row.username;
 
     // 2) CometChat REST config
     const base = `https://${process.env.COMETCHAT_APP_ID}.api-${process.env.COMETCHAT_REGION}.cometchat.io/v3`;
     const headers = {
       "Content-Type": "application/json",
       "Accept": "application/json",
-      "apiKey": process.env.COMETCHAT_API_KEY // REST API Key (server-side)
+      "apiKey": process.env.COMETCHAT_API_KEY
     };
 
     // 3) Ensure user exists (ignore if already exists)
@@ -93,4 +93,4 @@ export default async function handler(req, res) {
   } catch (e) {
     return res.status(500).json({ error: "server_error", detail: String(e) });
   }
-}
+};
