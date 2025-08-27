@@ -324,8 +324,15 @@
     }
   }
 
-  loadSDK().then(initCometChat).then(boot).catch(() => {
-    const r = document.getElementById(ROOT_ID) || document.body;
-    const warn = document.createElement("div");
-    warn.style = "position:fixed;right:18px;bottom:80px;background:#222;color:#fff;padding:10px 14px;border-radius:12px;border:1px solid #444;z-index:999999";
-    warn.textContent = "
+  loadSDK()
+    .then(initCometChat)
+    .then(boot)
+    .catch((err) => {
+      console.error(err);
+      const host = document.getElementById(ROOT_ID) || document.body;
+      const warn = document.createElement("div");
+      warn.style = "position:fixed;right:18px;bottom:80px;background:#222;color:#fff;padding:10px 14px;border-radius:12px;border:1px solid #444;z-index:999999";
+      warn.textContent = "Chat unavailable";
+      host.appendChild(warn);
+    });
+})();
