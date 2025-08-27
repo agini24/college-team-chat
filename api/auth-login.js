@@ -1,10 +1,10 @@
 // api/auth-login.js
 
-// ---- CORS (allow only your site) ----
+// ----- CORS (allow your Squarespace + API host) -----
 const ALLOW_ORIGINS = [
   "https://www.gocoyotes.ca",
   "https://gocoyotes.ca",
-  "https://college-team-chat.vercel.app" // your API host itself
+  "https://college-team-chat.vercel.app"
 ];
 
 function setCors(res, origin = "") {
@@ -17,7 +17,7 @@ function setCors(res, origin = "") {
   res.setHeader("Vary", "Origin");
 }
 
-// ---- tiny helper to parse JSON body ----
+// ----- tiny helper to parse JSON body -----
 function readJSON(req) {
   return new Promise((resolve) => {
     let data = "";
@@ -29,19 +29,20 @@ function readJSON(req) {
   });
 }
 
-// ---- main handler ----
+// ----- main handler -----
 export default async function handler(req, res) {
   setCors(res, req.headers.origin || "");
 
-  // Preflight
-  if (req.method === "OPTIONS") return res.status(204).end();
+  if (req.method === "OPTIONS") return res.status(204).end(); // CORS preflight
 
-  // Simple browser check
   if (req.method === "GET") {
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
     return res.status(200).send("auth-login endpoint is alive");
   }
 
-  if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+  if (req.method !== "POST") {
+    return res.status(405).send("Method Not Allowed");
+  }
 
   try {
     const body = await readJSON(req);
@@ -51,56 +52,44 @@ export default async function handler(req, res) {
     }
 
     // 1) Validate against roster in env
-    //    TEAM_CREDENTIALS must be a JSON array of { username, password }
+    // TEAM_CREDENTIALS must be JSON: [ { "username":"Full Name", "password":"abc123" }, ... ]
     const roster = JSON.parse(process.env.TEAM_CREDENTIALS || "[]");
-    const row = roster.find(
-      (r) => r.username === username && r.password === password
-    );
-    if (!row) {
-      return res.status(401).json({ error: "invalid_login" });
-    }
+    const row = roster.find(r => r.username === username && r.password === password);
+    if (!row) return res.status(401).json({ error: "invalid_login" });
 
-    const uid = username;      // use full name as UID
-    const name = row.username; // display name
+    const uid = username;       // use full name as CometChat UID
+    const name = row.username;  // display name
 
-    // 2) CometChat REST base + headers
+    // 2) CometChat REST config
     const base = `https://${process.env.COMETCHAT_APP_ID}.api-${process.env.COMETCHAT_REGION}.cometchat.io/v3`;
     const headers = {
       "Content-Type": "application/json",
       "Accept": "application/json",
-      "apiKey": process.env.COMETCHAT_API_KEY // REST API Key (NOT Auth Key/Secret)
+      "apiKey": process.env.COMETCHAT_API_KEY // REST API Key (server-side)
     };
 
-    // 3) Ensure user exists (ignore "already exists" errors)
+    // 3) Ensure user exists (ignore if already exists)
     try {
       await fetch(`${base}/users`, {
         method: "POST",
         headers,
         body: JSON.stringify([{ uid, name }])
       });
-    } catch {
-      // ignore
-    }
+    } catch { /* ignore */ }
 
-    // 4) Mint an auth token for this user
-    const resp = await fetch(
-      `${base}/users/${encodeURIComponent(uid)}/auth_tokens`,
-      { method: "POST", headers }
-    );
-    const json = await resp.json();
-
-    if (!resp.ok || !json?.data?.authToken) {
-      return res
-        .status(500)
-        .json({ error: "cometchat_token_failed", detail: json });
-    }
-
-    // 5) Return token to the launcher
-    return res.status(200).json({
-      uid,
-      name,
-      authToken: json.data.authToken
+    // 4) Mint auth token
+    const resp = await fetch(`${base}/users/${encodeURIComponent(uid)}/auth_tokens`, {
+      method: "POST",
+      headers
     });
+    const json = await resp.json();
+    if (!resp.ok || !json?.data?.authToken) {
+      return res.status(500).json({ error: "cometchat_token_failed", detail: json });
+    }
+
+    // 5) Return token to client
+    return res.status(200).json({ uid, name, authToken: json.data.authToken });
+
   } catch (e) {
     return res.status(500).json({ error: "server_error", detail: String(e) });
   }
