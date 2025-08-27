@@ -9,7 +9,7 @@
   const APP_ID = "2808186f24275c0e";
   const REGION = "us";
 
-  // 🔗 use your Vercel URL (no trailing slash)
+  // 🔗 your Vercel URL (no trailing slash)
   const AUTH_ENDPOINT = "https://college-team-chat.vercel.app/api/auth-login";
 
   // Groups
@@ -26,7 +26,8 @@
       if (window.CometChat) return resolve();
       const s = document.createElement("script");
       s.src = SDK_SRC; s.async = true;
-      s.onload = resolve; s.onerror = () => reject(new Error("CometChat SDK load failed"));
+      s.onload = resolve;
+      s.onerror = () => reject(new Error("CometChat SDK load failed"));
       document.head.appendChild(s);
     });
   }
@@ -43,8 +44,8 @@
 
   // --- Storage ---
   const LS_KEY = "coy_chat_user";
-  const getUser = () => { try { return JSON.parse(localStorage.getItem(LS_KEY) || "null"); } catch { return null; } };
-  const setUser = (u) => localStorage.setItem(LS_KEY, JSON.stringify(u));
+  const getUser  = () => { try { return JSON.parse(localStorage.getItem(LS_KEY) || "null"); } catch { return null; } };
+  const setUser  = (u) => localStorage.setItem(LS_KEY, JSON.stringify(u));
   const clearUser = () => localStorage.removeItem(LS_KEY);
 
   // --- DOM + Styles ---
@@ -174,7 +175,7 @@
     const j = await r.json();
     if (!r.ok || !j?.authToken) { alert("Login failed"); return; }
 
-    await CometChat.login(j.authToken);               // secure login via token
+    await CometChat.login(j.authToken);
     loggedUser = { uid: j.uid, name: j.name };
     setUser(loggedUser);
 
@@ -327,8 +328,7 @@
   loadSDK()
     .then(initCometChat)
     .then(boot)
-    .catch((err) => {
-      console.error(err);
+    .catch(() => {
       const host = document.getElementById(ROOT_ID) || document.body;
       const warn = document.createElement("div");
       warn.style = "position:fixed;right:18px;bottom:80px;background:#222;color:#fff;padding:10px 14px;border-radius:12px;border:1px solid #444;z-index:999999";
