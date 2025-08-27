@@ -1,8 +1,27 @@
 // api/auth-login.js
-export default async function handler(req, res) {
-  try {
-    if (req.method !== "POST") return res.status(405).end();
 
+const ALLOW_ORIGINS = [
+  "https://www.gocoyotes.ca",
+  "https://gocoyotes.ca"
+];
+
+function setCors(res, origin) {
+  res.setHeader(
+    "Access-Control-Allow-Origin",
+    ALLOW_ORIGINS.includes(origin) ? origin : ALLOW_ORIGINS[0]
+  );
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Vary", "Origin");
+}
+
+export default async function handler(req, res) {
+  setCors(res, req.headers.origin || "");
+
+  if (req.method === "OPTIONS") return res.status(204).end(); // Preflight check
+  if (req.method !== "POST") return res.status(405).end();
+
+  try {
     const body = await readJSON(req);
     const { username, password } = body || {};
     if (!username || !password) {
@@ -16,8 +35,8 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: "invalid_login" });
     }
 
-    const uid = username;         // use full name as UID
-    const name = row.username;    // display name = full name
+    const uid = username;       // use full name as UID
+    const name = row.username;  // display name
 
     // 2) Ensure CometChat user exists
     const base = `https://${process.env.COMETCHAT_APP_ID}.api-${process.env.COMETCHAT_REGION}.cometchat.io/v3`;
@@ -27,14 +46,13 @@ export default async function handler(req, res) {
       "apiKey": process.env.COMETCHAT_API_KEY // REST API Key
     };
 
-    // Create user if missing (ignore "already exists" errors)
     await fetch(`${base}/users`, {
       method: "POST",
       headers,
       body: JSON.stringify([{ uid, name }])
     }).catch(() => {});
 
-    // 3) Mint auth token for this user
+    // 3) Mint auth token
     const resp = await fetch(`${base}/users/${encodeURIComponent(uid)}/auth_tokens`, {
       method: "POST",
       headers
