@@ -1,10 +1,12 @@
 {
   "version": 2,
-  "functions": {
-    "api/**/*.js": { "runtime": "nodejs20.x" }
-  },
-  "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/:path*" },
-    { "source": "/(.*)", "destination": "/index.html" }
+  "builds": [
+    { "src": "api/**/*.js", "use": "@vercel/node@2.15.10" },
+    { "src": "index.html",   "use": "@vercel/static" },
+    { "src": "public/**",    "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/(.*)",     "dest": "/index.html" }
   ]
 }
